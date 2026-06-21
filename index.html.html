@@ -1,0 +1,4285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AcionaLab – Acionamentos Eletroeletrônicos Industriais</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161923;
+    --surface2: #1e2433;
+    --border: #2a3045;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #e8eaf0;
+    --text2: #8892a4;
+    --text3: #5a6478;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --sidebar-w: 280px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    transition: transform .3s ease;
+  }
+
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sidebar-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo .brand {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+
+  .sidebar-logo .sub {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .search-box {
+    padding: 16px 16px 8px;
+  }
+
+  .search-box input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px 8px 36px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: var(--sans);
+    outline: none;
+    transition: border-color .2s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235a6478' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 10px center;
+  }
+
+  .search-box input:focus { border-color: var(--accent); }
+
+  .nav-section {
+    padding: 8px 8px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    padding: 8px 12px 4px;
+    font-weight: 600;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--text2);
+    transition: all .15s;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(0,212,255,.1); color: var(--accent); }
+
+  .nav-item .icon { font-size: 16px; width: 18px; text-align: center; }
+  .nav-item .badge {
+    margin-left: auto;
+    background: var(--accent2);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  /* MAIN */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    min-height: 100vh;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(13,15,20,.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 50;
+  }
+
+  .topbar .breadcrumb {
+    font-size: 13px;
+    color: var(--text3);
+  }
+
+  .topbar .breadcrumb span { color: var(--accent); }
+
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  /* CONTENT */
+  .content {
+    padding: 48px 48px 80px;
+    max-width: 900px;
+  }
+
+  /* PAGE SECTIONS */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, rgba(0,212,255,.08) 0%, rgba(124,58,237,.08) 100%);
+    border: 1px solid rgba(0,212,255,.15);
+    border-radius: 16px;
+    padding: 48px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(0,212,255,.15) 0%, transparent 70%);
+  }
+
+  .hero .tag {
+    display: inline-block;
+    background: rgba(0,212,255,.15);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(0,212,255,.3);
+  }
+
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--text2);
+    line-height: 1.7;
+    max-width: 580px;
+  }
+
+  /* SECTION TITLES */
+  h2.section-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  h2.section-title::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 28px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  h3.sub-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 32px 0 12px;
+  }
+
+  p.desc {
+    font-size: 15px;
+    color: var(--text2);
+    line-height: 1.75;
+    margin-bottom: 16px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card.accent-border { border-left: 3px solid var(--accent); }
+  .card.green-border { border-left: 3px solid var(--green); }
+  .card.yellow-border { border-left: 3px solid var(--accent3); }
+  .card.purple-border { border-left: 3px solid var(--accent2); }
+
+  /* ANALOGY BOX */
+  .analogy {
+    background: linear-gradient(135deg, rgba(245,158,11,.08), rgba(245,158,11,.03));
+    border: 1px solid rgba(245,158,11,.25);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .analogy .icon-big { font-size: 32px; flex-shrink: 0; }
+
+  .analogy .text strong {
+    display: block;
+    color: var(--accent3);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .analogy .text p {
+    font-size: 14.5px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+
+  /* FORMULA BOX */
+  .formula-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .formula-box .var-list {
+    margin-top: 12px;
+    font-size: 13px;
+    font-family: var(--sans);
+    color: var(--text2);
+    font-weight: 400;
+    text-align: left;
+    line-height: 1.8;
+  }
+
+  .formula-box .var-list b { color: var(--accent3); font-family: var(--mono); }
+
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 16px 0;
+  }
+
+  th {
+    background: var(--surface2);
+    color: var(--accent);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  tr:hover td { background: var(--surface); }
+
+  /* STEP BOX */
+  .step-box {
+    counter-reset: steps;
+    margin: 16px 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    color: var(--bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-content strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .step-content p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+  /* CALC */
+  .calc-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+
+  .calc-field label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .calc-field input, .calc-field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: var(--sans);
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .calc-field input:focus, .calc-field select:focus { border-color: var(--accent); }
+
+  .btn-calc {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all .2s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-calc:hover { background: #00b8d9; transform: translateY(-1px); }
+
+  .calc-result {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .calc-result.show { display: block; }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .result-item {
+    text-align: center;
+    padding: 12px;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .result-item .val {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--accent);
+  }
+
+  .result-item .lbl {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+
+  /* EXERCISES */
+  .exercise {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  .exercise .ex-num {
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .exercise .ex-text {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .btn-gabarito {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all .2s;
+  }
+
+  .btn-gabarito:hover { border-color: var(--green); color: var(--green); }
+
+  .gabarito-content {
+    display: none;
+    background: rgba(16,185,129,.08);
+    border: 1px solid rgba(16,185,129,.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+
+  .gabarito-content.show { display: block; }
+  .gabarito-content .answer { font-family: var(--mono); color: var(--green); font-size: 16px; font-weight: 700; }
+
+  /* SVG TRIANGLE */
+  .svg-container { text-align: center; margin: 24px 0; }
+
+  /* TIPS */
+  .tip-card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .tip-icon { font-size: 24px; flex-shrink: 0; }
+
+  .tip-body strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .tip-body p {
+    font-size: 13.5px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* MAPA MENTAL */
+  #mapa-mental-svg { width: 100%; height: auto; }
+
+  /* PROGRESS */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width .6s ease;
+  }
+
+  /* BADGE */
+  .diff-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  .diff-basico { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+  .diff-inter { background: rgba(245,158,11,.15); color: var(--accent3); border: 1px solid rgba(245,158,11,.3); }
+  .diff-avancado { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+
+  /* CHUVEIRO DIAGRAM */
+  .daily-examples {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .daily-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .daily-card .icon { font-size: 36px; margin-bottom: 10px; }
+  .daily-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .daily-card p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; }
+    .content { padding: 24px 20px 60px; }
+    .calc-grid { grid-template-columns: 1fr; }
+    .daily-examples { grid-template-columns: 1fr; }
+    .hero { padding: 28px; }
+    .hero h1 { font-size: 26px; }
+    .menu-toggle { display: block; }
+    .topbar { padding: 0 16px; }
+  }
+
+  /* OVERLAY */
+  #overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 99;
+  }
+  #overlay.show { display: block; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ANIMATION FOR CAPACITOR */
+  @keyframes pulse-cap {
+    0%, 100% { opacity: .4; }
+    50% { opacity: 1; }
+  }
+
+  .cap-anim { animation: pulse-cap 1.5s ease-in-out infinite; }
+
+  /* NOTA BOX */
+  .nota {
+    background: rgba(124,58,237,.08);
+    border: 1px solid rgba(124,58,237,.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: var(--text2);
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+
+  .nota strong { color: var(--accent2); }
+
+  /* ===== NOVOS ESTILOS: MATEMÁTICA + GERADOR DE EXERCÍCIOS ===== */
+
+  /* XP bar no topo do sidebar */
+  .xp-panel {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .xp-panel-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .xp-level-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent3);
+  }
+
+  .xp-level-badge .lvl-icon { font-size: 15px; }
+
+  .xp-count {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .xp-progress-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .xp-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent3), var(--accent));
+    border-radius: 3px;
+    transition: width .5s ease;
+  }
+
+  /* Math module cards */
+  .math-step-visual {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    font-family: var(--mono);
+  }
+
+  .division-anim {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 0;
+  }
+
+  .division-box {
+    text-align: center;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-width: 90px;
+  }
+
+  .division-box .num { font-size: 22px; font-weight: 700; color: var(--accent); font-family: var(--mono); }
+  .division-box .lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+  .division-op { font-size: 24px; color: var(--text3); font-weight: 300; }
+
+  .error-common {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: rgba(239,68,68,.06);
+    border: 1px solid rgba(239,68,68,.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .error-common .err-icon { font-size: 20px; flex-shrink: 0; }
+  .error-common strong { display: block; font-size: 14px; color: var(--red); margin-bottom: 3px; }
+  .error-common p { font-size: 13px; color: var(--text2); line-height: 1.6; margin: 0; }
+
+  /* Mini interactive exercises in math modules */
+  .mini-exercise {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+
+  .mini-exercise .mini-q { font-size: 14.5px; margin-bottom: 10px; }
+
+  .mini-input-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .mini-input-row input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: var(--mono);
+    width: 140px;
+    outline: none;
+  }
+
+  .mini-input-row input:focus { border-color: var(--accent); }
+
+  .mini-input-row button {
+    background: var(--accent2);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--sans);
+  }
+
+  .mini-input-row button:hover { background: #6b2fd6; }
+
+  .mini-feedback {
+    margin-top: 10px;
+    font-size: 13.5px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: none;
+  }
+
+  .mini-feedback.correct { display: block; background: rgba(16,185,129,.12); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+  .mini-feedback.wrong { display: block; background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+
+  /* Macetes / Formula cards */
+  .macete-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .macete-formula {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: center;
+    background: var(--surface2);
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+
+  .macete-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+
+  .macete-row .macete-tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 4px 0;
+    color: var(--text3);
+  }
+
+  .macete-row.decorar .macete-tag { color: var(--accent3); }
+  .macete-row.raciocinio .macete-tag { color: var(--green); }
+  .macete-row.erro .macete-tag { color: var(--red); }
+
+  .macete-row p { margin: 0; color: var(--text2); }
+
+  /* GERADOR DE EXERCÍCIOS */
+  .gen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .gen-mode-tabs {
+    display: flex;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .gen-mode-tab {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all .15s;
+  }
+
+  .gen-mode-tab.active { background: var(--accent); color: var(--bg); }
+
+  .gen-diff-select {
+    display: flex;
+    gap: 8px;
+  }
+
+  .gen-diff-btn {
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    transition: all .15s;
+  }
+
+  .gen-diff-btn.active.facil { background: rgba(16,185,129,.15); border-color: var(--green); color: var(--green); }
+  .gen-diff-btn.active.medio { background: rgba(245,158,11,.15); border-color: var(--accent3); color: var(--accent3); }
+  .gen-diff-btn.active.dificil { background: rgba(239,68,68,.15); border-color: var(--red); color: var(--red); }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+
+  .question-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .question-tag {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--surface2);
+    color: var(--accent);
+  }
+
+  .question-streak {
+    font-size: 12px;
+    color: var(--accent3);
+    font-weight: 600;
+  }
+
+  .question-text {
+    font-size: 17px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .question-text .q-data {
+    display: inline-block;
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-weight: 600;
+    margin: 2px 0;
+  }
+
+  .answer-input-area {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .answer-input-area input {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: var(--mono);
+    width: 180px;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .answer-input-area input:focus { border-color: var(--accent); }
+  .answer-input-area .unit-label { color: var(--text3); font-size: 14px; }
+
+  .btn-verify {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .btn-verify:hover { background: #00b8d9; transform: translateY(-1px); }
+
+  .btn-next {
+    background: var(--accent2);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+  }
+
+  .btn-next:hover { background: #6b2fd6; }
+
+  .feedback-panel {
+    margin-top: 20px;
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: none;
+  }
+
+  .feedback-panel.correct {
+    display: block;
+    background: rgba(16,185,129,.08);
+    border: 1px solid rgba(16,185,129,.25);
+  }
+
+  .feedback-panel.wrong {
+    display: block;
+    background: rgba(239,68,68,.08);
+    border: 1px solid rgba(239,68,68,.25);
+  }
+
+  .feedback-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .feedback-panel.correct .feedback-title { color: var(--green); }
+  .feedback-panel.wrong .feedback-title { color: var(--red); }
+
+  .feedback-steps {
+    font-size: 13.5px;
+    color: var(--text2);
+    line-height: 1.8;
+    font-family: var(--mono);
+  }
+
+  .feedback-steps .fs-line { margin-bottom: 4px; }
+  .feedback-steps .fs-result { color: var(--accent); font-weight: 700; font-size: 15px; }
+
+  /* SIMULADO */
+  .sim-setup {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .sim-setup .sim-icon { font-size: 56px; margin-bottom: 16px; }
+  .sim-setup h3 { font-size: 22px; margin-bottom: 10px; }
+  .sim-setup p { color: var(--text2); margin-bottom: 24px; max-width: 420px; margin-left: auto; margin-right: auto; }
+
+  .btn-start-sim {
+    background: var(--accent3);
+    color: var(--bg);
+    border: none;
+    padding: 14px 36px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .btn-start-sim:hover { background: #e0930a; }
+
+  .sim-timer-bar {
+    position: sticky;
+    top: 56px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+  }
+
+  .sim-timer { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--accent3); }
+  .sim-progress-text { font-size: 13px; color: var(--text2); }
+
+  .sim-results {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .sim-score-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 8px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    flex-direction: column;
+  }
+
+  .sim-score-circle .pct { font-size: 36px; font-weight: 800; font-family: var(--mono); }
+  .sim-score-circle .lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
+
+  .sim-review-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    text-align: left;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .sim-review-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .sim-review-body { flex: 1; }
+  .sim-review-body .sr-q { font-size: 13.5px; margin-bottom: 4px; }
+  .sim-review-body .sr-a { font-size: 12.5px; color: var(--text3); font-family: var(--mono); }
+
+  /* ESTATÍSTICAS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .stat-card .stat-icon { font-size: 24px; margin-bottom: 8px; }
+  .stat-card .stat-value { font-size: 26px; font-weight: 800; font-family: var(--mono); color: var(--accent); }
+  .stat-card .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+  .badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+
+  .medal-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 10px;
+    text-align: center;
+    transition: all .2s;
+  }
+
+  .medal-item.locked { opacity: .35; filter: grayscale(1); }
+  .medal-item .medal-icon { font-size: 30px; margin-bottom: 6px; }
+  .medal-item .medal-name { font-size: 11px; font-weight: 600; }
+  .medal-item .medal-desc { font-size: 9.5px; color: var(--text3); margin-top: 2px; }
+
+  .topic-error-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .topic-error-bar .topic-name { font-size: 13px; width: 140px; flex-shrink: 0; color: var(--text2); }
+  .topic-error-bar .topic-bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .topic-error-bar .topic-bar-fill { height: 100%; border-radius: 4px; }
+  .topic-error-bar .topic-pct { font-size: 12px; font-family: var(--mono); width: 40px; text-align: right; color: var(--text3); }
+
+  .btn-reset-stats {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+
+  .btn-reset-stats:hover { border-color: var(--red); color: var(--red); }
+
+  @media (max-width: 768px) {
+    .gen-header { flex-direction: column; align-items: stretch; }
+    .answer-input-area { flex-direction: column; align-items: stretch; }
+    .answer-input-area input { width: 100%; }
+    .question-card { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="overlay"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">⚡ AcionaLab</div>
+    <div class="sub">Automação Industrial</div>
+  </div>
+
+  <div class="xp-panel">
+    <div class="xp-panel-top">
+      <div class="xp-level-badge"><span class="lvl-icon">🏆</span> <span id="sidebar-level">Nível 1</span></div>
+      <div class="xp-count"><span id="sidebar-xp">0</span> XP</div>
+    </div>
+    <div class="xp-progress-track">
+      <div class="xp-progress-fill" id="sidebar-xp-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="Buscar conteúdo..." oninput="searchContent(this.value)">
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Início</div>
+    <a class="nav-item active" onclick="showPage('intro')">
+      <span class="icon">🏠</span> Introdução
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Módulo 1 · Fator de Potência</div>
+    <a class="nav-item" onclick="showPage('fp-conceito')">
+      <span class="icon">⚡</span> Conceito
+    </a>
+    <a class="nav-item" onclick="showPage('fp-triangulo')">
+      <span class="icon">📐</span> Triângulo de Potências
+    </a>
+    <a class="nav-item" onclick="showPage('fp-formulas')">
+      <span class="icon">🔢</span> Fórmulas
+    </a>
+    <a class="nav-item" onclick="showPage('fp-exemplos')">
+      <span class="icon">✅</span> Exemplos Resolvidos
+    </a>
+    <a class="nav-item" onclick="showPage('fp-correcao')">
+      <span class="icon">🔋</span> Correção do FP
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Módulo 2 · Corrente de Motores</div>
+    <a class="nav-item" onclick="showPage('motor-conceitos')">
+      <span class="icon">🔌</span> Conceitos Básicos
+    </a>
+    <a class="nav-item" onclick="showPage('motor-formulas')">
+      <span class="icon">📊</span> Fórmulas Mono/Trifásico
+    </a>
+    <a class="nav-item" onclick="showPage('motor-exemplos')">
+      <span class="icon">✅</span> Exemplos Resolvidos
+    </a>
+    <a class="nav-item" onclick="showPage('motor-tabela')">
+      <span class="icon">📋</span> Tabela CV × Watts
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Módulo 3 · Dicas Práticas</div>
+    <a class="nav-item" onclick="showPage('dicas-cotidiano')">
+      <span class="icon">💡</span> Exemplos do Cotidiano
+    </a>
+    <a class="nav-item" onclick="showPage('dicas-provas')">
+      <span class="icon">📝</span> Macetes para Provas
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Matemática Aplicada</div>
+    <a class="nav-item" onclick="showPage('mat-divisao')">
+      <span class="icon">➗</span> 1. Aprendendo a Dividir
+    </a>
+    <a class="nav-item" onclick="showPage('mat-raiz')">
+      <span class="icon">√</span> 2. Raiz Quadrada
+    </a>
+    <a class="nav-item" onclick="showPage('mat-fracoes')">
+      <span class="icon">🍕</span> 3. Frações
+    </a>
+    <a class="nav-item" onclick="showPage('mat-porcentagem')">
+      <span class="icon">💯</span> 4. Porcentagem
+    </a>
+    <a class="nav-item" onclick="showPage('mat-regra3')">
+      <span class="icon">⚖️</span> 5. Regra de Três
+    </a>
+    <a class="nav-item" onclick="showPage('mat-macetes')">
+      <span class="icon">🧩</span> 6. Macetes e Atalhos
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Praticar</div>
+    <a class="nav-item" onclick="showPage('exercicios')">
+      <span class="icon">🏋️</span> Exercícios <span class="badge">45</span>
+    </a>
+    <a class="nav-item" onclick="showPage('simulador')">
+      <span class="icon">🧮</span> Simulador
+    </a>
+    <a class="nav-item" onclick="showPage('gerador')">
+      <span class="icon">🎲</span> Gerador de Exercícios <span class="badge">3500+</span>
+    </a>
+    <a class="nav-item" onclick="showPage('simulado')">
+      <span class="icon">⏱️</span> Simulado
+    </a>
+    <a class="nav-item" onclick="showPage('treino-infinito')">
+      <span class="icon">♾️</span> Treino Infinito
+    </a>
+    <a class="nav-item" onclick="showPage('mapa-mental')">
+      <span class="icon">🗺️</span> Mapa Mental
+    </a>
+    <a class="nav-item" onclick="showPage('estatisticas')">
+      <span class="icon">📊</span> Estatísticas
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="topbar">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="breadcrumb" id="breadcrumb">Início › <span>Introdução</span></div>
+    <div></div>
+  </div>
+
+  <div class="content">
+
+    <!-- INTRO -->
+    <div class="page active" id="page-intro">
+      <div class="hero">
+        <div class="tag">Automação Industrial</div>
+        <h1>Acionamentos<br><em>Eletroeletrônicos</em> Industriais</h1>
+        <p>Aprenda do zero, com exemplos do dia a dia, exercícios resolvidos e simuladores interativos. Nenhuma experiência em fábrica necessária.</p>
+      </div>
+
+      <h2 class="section-title">O que são Acionamentos?</h2>
+      <p class="desc">Pensa assim: toda vez que você liga o ventilador do teto, a máquina de lavar ou o portão automático da sua casa, alguma coisa precisou dar a partida nesse equipamento. Essa "coisa" que controla quando, como e com que força um motor elétrico funciona é o <strong>acionamento eletroeletrônico</strong>.</p>
+      <p class="desc">Na indústria, isso acontece em uma escala muito maior: esteiras transportadoras, compressores, bombas d'água, guindastes, elevadores, misturadores de produtos... tudo controlado por sistemas de acionamento.</p>
+
+      <div class="analogy">
+        <div class="icon-big">🚗</div>
+        <div class="text">
+          <strong>Analogia do Dia a Dia</strong>
+          <p>Pense no acelerador de um carro. Você não liga o motor diretamente na velocidade máxima, né? O acelerador controla quanto combustível entra no motor, controlando a velocidade. O inversor de frequência faz exatamente isso com motores elétricos industriais: controla a velocidade e o torque de forma suave e eficiente.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Onde aparecem na vida real?</h3>
+      <div class="daily-examples">
+        <div class="daily-card">
+          <div class="icon">🛗</div>
+          <h4>Elevadores</h4>
+          <p>O motor que sobe e desce o elevador é controlado por um inversor de frequência para parar suavemente no andar certo.</p>
+        </div>
+        <div class="daily-card">
+          <div class="icon">❄️</div>
+          <h4>Ar Condicionado</h4>
+          <p>Os modelos inverter usam acionamento eletrônico para ajustar a velocidade do compressor conforme a temperatura ambiente.</p>
+        </div>
+        <div class="daily-card">
+          <div class="icon">🏭</div>
+          <h4>Esteiras Industriais</h4>
+          <p>Em fábricas, esteiras precisam acelerar e desacelerar suavemente. Acionamentos permitem esse controle preciso.</p>
+        </div>
+        <div class="daily-card">
+          <div class="icon">🚿</div>
+          <h4>Chuveiro Elétrico</h4>
+          <p>Ele converte energia elétrica em calor e trabalho. Entender sua potência é o primeiro passo para entender acionamentos!</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">O que você vai aprender neste curso?</h3>
+      <div class="step-box">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Fator de Potência</strong>
+            <p>Por que a energia "desperdiçada" existe e como a indústria corrige isso para não pagar multas.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Cálculo de Corrente em Motores</strong>
+            <p>Como calcular a corrente elétrica que um motor consome, essencial para dimensionar cabos e disjuntores.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Aplicações Práticas</strong>
+            <p>Conectar tudo isso com situações do cotidiano e se preparar para provas técnicas.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="nota">
+        <strong>📌 Dica de Estudo:</strong> Não tente memorizar fórmulas logo de início. Primeiro entenda <em>o porquê</em> de cada coisa existir. As fórmulas vêm naturalmente depois. Use o menu lateral para navegar pelos módulos na ordem ou saltar para o que precisar revisar.
+      </div>
+    </div>
+
+    <!-- FP CONCEITO -->
+    <div class="page" id="page-fp-conceito">
+      <h2 class="section-title">Fator de Potência — Conceito</h2>
+      <p class="desc">Antes de qualquer fórmula, vamos entender <em>por que</em> o fator de potência existe. Isso vai mudar sua cabeça.</p>
+
+      <div class="analogy">
+        <div class="icon-big">🍺</div>
+        <div class="text">
+          <strong>A Analogia do Chope</strong>
+          <p>Imagina que você pediu um copo de chope. O chope (a cerveja de fato) é a <strong>Potência Ativa</strong> — é o que faz trabalho útil, gera calor, movimento, luz. A espuma em cima é a <strong>Potência Reativa</strong> — ocupou espaço no copo mas não deu saciedade. O copo inteiro, com espuma e tudo, é a <strong>Potência Aparente</strong> — é o que a distribuidora de energia entregou para você. <br><br>O Fator de Potência mede a proporção de chope (útil) em relação ao copo inteiro.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Por que a potência reativa existe?</h3>
+      <p class="desc">Cargas como motores, transformadores e reatores de lâmpadas fluorescentes são <strong>indutivas</strong> — precisam de campo magnético para funcionar. Esse campo magnético não consome energia permanentemente, mas "puxa" e "devolve" energia da rede elétrica o tempo todo. Isso cria uma defasagem entre tensão e corrente.</p>
+
+      <div class="card accent-border">
+        <h4 style="color: var(--accent); margin-bottom: 8px;">⚡ Defasagem de Fase</h4>
+        <p class="desc" style="margin:0">Quando a tensão e a corrente não estão "sincronizadas" (defasadas), parte da energia vai e volta sem realizar trabalho. O ângulo dessa defasagem é o famoso <strong>φ (phi)</strong>. O cosseno desse ângulo é o fator de potência: <code style="color:var(--accent3)">FP = cos(φ)</code>.</p>
+      </div>
+
+      <h3 class="sub-title">Fator de Potência: de 0 a 1</h3>
+      <p class="desc"><strong>FP = 1 (ideal):</strong> toda a energia entregue é aproveitada. Isso só acontece em cargas puramente resistivas, como um chuveiro elétrico.</p>
+      <p class="desc"><strong>FP = 0,8 (típico de motores):</strong> para entregar 8 kW de trabalho útil, a rede precisou entregar 10 kVA. O chopo veio com 20% de espuma.</p>
+      <p class="desc"><strong>FP = 0,5 (ruim):</strong> metade da energia não faz trabalho. A distribuidora cobra mais caro por isso.</p>
+
+      <div class="analogy">
+        <div class="icon-big">🚚</div>
+        <div class="text">
+          <strong>Outra Analogia: o Caminhão</strong>
+          <p>Imagine um caminhão transportando tijolos. Os tijolos são a potência ativa (trabalho útil). A carroceria vazia, o motorista e o combustível para andar em vão são a potência reativa. Se o caminhão carrega 8 toneladas mas tem capacidade de 10 toneladas, o FP é 8/10 = 0,8.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FP TRIANGULO -->
+    <div class="page" id="page-fp-triangulo">
+      <h2 class="section-title">Triângulo de Potências</h2>
+      <p class="desc">As três potências formam um triângulo retângulo. Isso facilita muito os cálculos!</p>
+
+      <div class="svg-container">
+        <svg viewBox="0 0 520 320" width="100%" style="max-width:520px">
+          <defs>
+            <marker id="arrowA" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#00d4ff"/>
+            </marker>
+            <marker id="arrowB" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/>
+            </marker>
+            <marker id="arrowC" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+            </marker>
+          </defs>
+
+          <!-- Triangle -->
+          <polygon points="60,250 420,250 420,90" fill="none" stroke="#2a3045" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <line x1="65" y1="250" x2="415" y2="250" stroke="#00d4ff" stroke-width="3" marker-end="url(#arrowA)"/>
+          <line x1="420" y1="245" x2="420" y2="95" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowB)"/>
+          <line x1="65" y1="247" x2="415" y2="93" stroke="#7c3aed" stroke-width="3" marker-end="url(#arrowC)"/>
+
+          <!-- Right angle -->
+          <rect x="404" y="234" width="16" height="16" fill="none" stroke="#5a6478" stroke-width="1.5"/>
+
+          <!-- Labels -->
+          <text x="230" y="278" fill="#00d4ff" font-size="18" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">P (kW)</text>
+          <text x="230" y="295" fill="#8892a4" font-size="12" font-family="Inter" text-anchor="middle">Potência Ativa</text>
+
+          <text x="460" y="175" fill="#f59e0b" font-size="18" font-family="JetBrains Mono" font-weight="700">Q</text>
+          <text x="455" y="192" fill="#f59e0b" font-size="14" font-family="JetBrains Mono" font-weight="700">(kVAr)</text>
+          <text x="464" y="208" fill="#8892a4" font-size="10" font-family="Inter">Reativa</text>
+
+          <text x="205" y="155" fill="#7c3aed" font-size="18" font-family="JetBrains Mono" font-weight="700" text-anchor="middle" transform="rotate(-24,205,155)">S (kVA)</text>
+          <text x="180" y="172" fill="#8892a4" font-size="11" font-family="Inter" text-anchor="middle" transform="rotate(-24,180,172)">Potência Aparente</text>
+
+          <!-- Phi angle -->
+          <path d="M 110,250 A 50,50 0 0,1 143,227" fill="none" stroke="#10b981" stroke-width="2"/>
+          <text x="128" y="244" fill="#10b981" font-size="16" font-family="JetBrains Mono" font-weight="700">φ</text>
+
+          <!-- Pythagoras -->
+          <text x="260" y="45" fill="#8892a4" font-size="15" font-family="JetBrains Mono" text-anchor="middle">P² + Q² = S²</text>
+          <text x="260" y="65" fill="#5a6478" font-size="12" font-family="Inter" text-anchor="middle">FP = cos(φ) = P / S</text>
+        </svg>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-bottom:12px; font-size:16px">As Três Potências Explicadas</h4>
+        <table>
+          <tr>
+            <th>Símbolo</th>
+            <th>Nome</th>
+            <th>Unidade</th>
+            <th>O que faz?</th>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--accent); font-family:var(--mono)">P</strong></td>
+            <td>Potência Ativa</td>
+            <td>kW / W</td>
+            <td>Realiza trabalho útil (calor, movimento, luz)</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--accent3); font-family:var(--mono)">Q</strong></td>
+            <td>Potência Reativa</td>
+            <td>kVAr</td>
+            <td>Mantém campos magnéticos (não faz trabalho útil)</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--accent2); font-family:var(--mono)">S</strong></td>
+            <td>Potência Aparente</td>
+            <td>kVA</td>
+            <td>É o que a distribuidora entrega (soma vetorial)</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="nota">
+        <strong>🔑 Regra de Ouro:</strong> P² + Q² = S² — isso é o Teorema de Pitágoras aplicado às potências elétricas! Sempre que souber duas delas, você calcula a terceira.
+      </div>
+    </div>
+
+    <!-- FP FORMULAS -->
+    <div class="page" id="page-fp-formulas">
+      <h2 class="section-title">Fórmulas do Fator de Potência</h2>
+
+      <h3 class="sub-title">Potência Ativa (P)</h3>
+      <div class="formula-box">
+        P = V × I × cos(φ)
+        <div class="var-list">
+          <b>P</b> = Potência Ativa [W ou kW]<br>
+          <b>V</b> = Tensão [Volts]<br>
+          <b>I</b> = Corrente [Ampères]<br>
+          <b>cos(φ)</b> = Fator de Potência (adimensional, 0 a 1)
+        </div>
+      </div>
+
+      <h3 class="sub-title">Potência Aparente (S)</h3>
+      <div class="formula-box">
+        S = V × I
+        <div class="var-list">
+          <b>S</b> = Potência Aparente [VA ou kVA]<br>
+          <b>V</b> = Tensão [Volts]<br>
+          <b>I</b> = Corrente [Ampères]<br>
+          <em style="color:var(--text3)">Obs: sem o cos(φ) — é a potência total entregue pela rede</em>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Fator de Potência (FP)</h3>
+      <div class="formula-box">
+        FP = P / S = cos(φ)
+        <div class="var-list">
+          <b>FP</b> = Fator de Potência (valor entre 0 e 1)<br>
+          <b>P</b> = Potência Ativa [W]<br>
+          <b>S</b> = Potência Aparente [VA]
+        </div>
+      </div>
+
+      <h3 class="sub-title">Potência Reativa (Q)</h3>
+      <div class="formula-box">
+        Q = S × sen(φ) &nbsp;&nbsp; ou &nbsp;&nbsp; Q = √(S² − P²)
+        <div class="var-list">
+          <b>Q</b> = Potência Reativa [VAr ou kVAr]<br>
+          <b>S</b> = Potência Aparente [VA]<br>
+          <b>sen(φ)</b> = seno do ângulo de defasagem<br>
+          <em style="color:var(--text3)">Dica: se tiver P e S, use a segunda forma — sem precisar do ângulo!</em>
+        </div>
+      </div>
+
+      <div class="card yellow-border">
+        <h4 style="color:var(--accent3); margin-bottom:10px">⚠️ Relação entre φ, sen e cos</h4>
+        <p class="desc" style="margin:0">Se FP = cos(φ), então o ângulo φ = arccos(FP). E sen(φ) pode ser calculado por: <code style="color:var(--accent)">sen(φ) = √(1 − cos²(φ))</code>. Isso é identidade trigonométrica — vale sempre!</p>
+      </div>
+    </div>
+
+    <!-- FP EXEMPLOS -->
+    <div class="page" id="page-fp-exemplos">
+      <h2 class="section-title">Exemplos Resolvidos — Fator de Potência</h2>
+
+      <div class="card green-border">
+        <h3 style="color:var(--green); margin-bottom:16px">📘 Exemplo 1 — Motor Industrial</h3>
+        <p class="desc"><strong>Dados:</strong> Motor alimentado com 220V, corrente de 10A, FP = 0,8. Calcule P, S e Q.</p>
+
+        <div class="step-box">
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">1</div>
+            <div class="step-content">
+              <strong>Potência Aparente (S)</strong>
+              <p>S = V × I = 220 × 10 = <span style="color:var(--accent); font-family:var(--mono)">2.200 VA = 2,2 kVA</span></p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">2</div>
+            <div class="step-content">
+              <strong>Potência Ativa (P)</strong>
+              <p>P = V × I × cos(φ) = 220 × 10 × 0,8 = <span style="color:var(--accent); font-family:var(--mono)">1.760 W = 1,76 kW</span></p>
+              <p style="margin-top:4px; color:var(--text3); font-size:13px">Ou simplesmente: P = S × FP = 2.200 × 0,8 = 1.760 W ✓</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">3</div>
+            <div class="step-content">
+              <strong>Potência Reativa (Q)</strong>
+              <p>Q = √(S² − P²) = √(2.200² − 1.760²) = √(4.840.000 − 3.097.600) = √1.742.400 = <span style="color:var(--accent); font-family:var(--mono)">1.320 VAr ≈ 1,32 kVAr</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="nota" style="margin-top:12px">
+          <strong>Interpretação:</strong> A rede entregou 2.200 VA. Desse total, 1.760 W viraram trabalho útil e 1.320 VAr foram apenas para manter o campo magnético do motor. É como pagar por 10 copos de chope mas só beber o equivalente a 8.
+        </div>
+      </div>
+
+      <div class="card green-border">
+        <h3 style="color:var(--green); margin-bottom:16px">📘 Exemplo 2 — Planta Industrial com 15 Motores</h3>
+        <p class="desc"><strong>Dados:</strong> Uma planta possui carga total de S = 500 kVA com FP = 0,75. Quanto está sendo desperdiçado em kVAr?</p>
+
+        <div class="step-box">
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">1</div>
+            <div class="step-content">
+              <strong>Potência Ativa</strong>
+              <p>P = S × FP = 500 × 0,75 = <span style="color:var(--accent); font-family:var(--mono)">375 kW</span></p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">2</div>
+            <div class="step-content">
+              <strong>Potência Reativa</strong>
+              <p>Q = √(500² − 375²) = √(250.000 − 140.625) = √109.375 = <span style="color:var(--accent); font-family:var(--mono)">330,7 kVAr</span></p>
+            </div>
+          </div>
+        </div>
+        <p class="desc" style="margin-top:8px">São <strong style="color:var(--red)">330 kVAr</strong> de energia reativa circulando na rede sem produzir trabalho. A distribuidora cobra multa por isso!</p>
+      </div>
+    </div>
+
+    <!-- FP CORRECAO -->
+    <div class="page" id="page-fp-correcao">
+      <h2 class="section-title">Correção do Fator de Potência</h2>
+
+      <p class="desc">A ANEEL (Agência Nacional de Energia Elétrica) exige que indústrias mantenham o FP acima de <strong>0,92</strong>. Abaixo disso, vem multa na conta de luz. Como resolver? <strong>Banco de Capacitores!</strong></p>
+
+      <div class="analogy">
+        <div class="icon-big">🧲</div>
+        <div class="text">
+          <strong>Indutores vs Capacitores</strong>
+          <p>Motores são <em>indutivos</em> — a corrente atrasa em relação à tensão. Capacitores são o oposto — a corrente adianta. Quando instalamos capacitores próximos aos motores, os dois se "cancelam" e o FP sobe para mais perto de 1. É como equilibrar a espuma da cerveja antes de servir.</p>
+        </div>
+      </div>
+
+      <!-- Animated SVG -->
+      <div class="svg-container">
+        <svg viewBox="0 0 500 220" width="100%" style="max-width:500px; background:var(--surface); border-radius:12px; border:1px solid var(--border)">
+          <!-- Grid -->
+          <text x="250" y="24" fill="#5a6478" font-size="12" font-family="Inter" text-anchor="middle">Diagrama: Banco de Capacitores corrigindo o FP</text>
+
+          <!-- Transformer -->
+          <rect x="20" y="80" width="60" height="60" rx="8" fill="#1e2433" stroke="#2a3045" stroke-width="1.5"/>
+          <text x="50" y="108" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">TRAFO</text>
+          <text x="50" y="122" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">380V</text>
+
+          <!-- Line -->
+          <line x1="80" y1="110" x2="180" y2="110" stroke="#00d4ff" stroke-width="2.5"/>
+
+          <!-- Motor -->
+          <rect x="180" y="80" width="70" height="60" rx="8" fill="#1e2433" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="215" y="108" fill="#f59e0b" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">MOTOR</text>
+          <text x="215" y="122" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">FP=0.75</text>
+
+          <!-- Arrow down to capacitor -->
+          <line x1="215" y1="140" x2="215" y2="175" stroke="#5a6478" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+          <!-- Capacitor bank -->
+          <rect x="170" y="175" width="90" height="38" rx="6" fill="#1e2433" stroke="#10b981" stroke-width="1.5" class="cap-anim"/>
+          <text x="215" y="193" fill="#10b981" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">BANCO DE</text>
+          <text x="215" y="206" fill="#10b981" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">CAPACITORES</text>
+
+          <!-- Arrow right -->
+          <line x1="250" y1="110" x2="340" y2="110" stroke="#7c3aed" stroke-width="2.5" marker-end="url(#arrowC)"/>
+
+          <!-- Result -->
+          <rect x="340" y="80" width="80" height="60" rx="8" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5"/>
+          <text x="380" y="107" fill="#10b981" font-size="11" font-family="Inter" font-weight="700" text-anchor="middle">FP CORRIGIDO</text>
+          <text x="380" y="124" fill="#00d4ff" font-size="18" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">0.95</text>
+
+          <!-- Labels -->
+          <text x="130" y="100" fill="#00d4ff" font-size="11" font-family="Inter" text-anchor="middle">corrente</text>
+          <text x="130" y="113" fill="#00d4ff" font-size="11" font-family="Inter" text-anchor="middle">distorcida</text>
+
+          <text x="295" y="100" fill="#7c3aed" font-size="11" font-family="Inter" text-anchor="middle">corrente</text>
+          <text x="295" y="113" fill="#7c3aed" font-size="11" font-family="Inter" text-anchor="middle">corrigida</text>
+        </svg>
+      </div>
+
+      <h3 class="sub-title">Benefícios da Correção</h3>
+      <div class="card">
+        <table>
+          <tr><th>Benefício</th><th>Explicação</th></tr>
+          <tr><td>✅ Sem multa</td><td>FP acima de 0,92 evita penalidades da ANEEL</td></tr>
+          <tr><td>✅ Menos perdas</td><td>Corrente menor nos cabos = menos calor = mais eficiência</td></tr>
+          <tr><td>✅ Tensão mais estável</td><td>Redução de quedas de tensão na rede interna</td></tr>
+          <tr><td>✅ Aproveitamento da capacidade</td><td>O mesmo transformador pode alimentar mais carga</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- MOTOR CONCEITOS -->
+    <div class="page" id="page-motor-conceitos">
+      <h2 class="section-title">Conceitos Básicos — Motores</h2>
+
+      <div class="card accent-border">
+        <h3 style="color:var(--accent); margin-bottom:12px">🔌 O que precisamos saber para calcular a corrente?</h3>
+        <p class="desc">Para dimensionar um motor (escolher cabo, disjuntor, contator...) precisamos saber a corrente que ele consume. E para isso, precisamos de 4 informações:</p>
+        <div class="step-box">
+          <div class="step">
+            <div class="step-num">P</div>
+            <div class="step-content">
+              <strong>Potência mecânica (em CV ou kW)</strong>
+              <p>É a potência que o motor entrega no eixo. Está na plaquinha do motor. Ex: 5 CV, 10 CV, 75 kW...</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">V</div>
+            <div class="step-content">
+              <strong>Tensão de alimentação</strong>
+              <p>220V, 380V ou 440V no Brasil. É a tensão da rede elétrica que alimenta o motor.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">η</div>
+            <div class="step-content">
+              <strong>Rendimento (η — eta)</strong>
+              <p>Nenhum motor é 100% eficiente. Sempre há perda por calor e atrito. Tipicamente entre 0,85 e 0,95 (85% a 95%).</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">FP</div>
+            <div class="step-content">
+              <strong>Fator de Potência</strong>
+              <p>Motores são cargas indutivas, então o FP é sempre menor que 1. Tipicamente entre 0,80 e 0,90.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analogy">
+        <div class="icon-big">🏋️</div>
+        <div class="text">
+          <strong>Analogia do Rendimento</strong>
+          <p>Imagine que você come 1.000 calorias para conseguir levantar pesos. Mas seu corpo aproveitou só 700 calorias — as outras 300 viraram calor corporal. O rendimento é 700/1000 = 70%. O motor faz o mesmo: consome mais energia elétrica do que entrega de energia mecânica.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">A famosa conversão: CV para Watts</h3>
+      <p class="desc">A potência de motores no Brasil é geralmente dada em <strong>CV (Cavalo-Vapor)</strong>. Para os cálculos, precisamos converter para Watts.</p>
+      <div class="formula-box">
+        1 CV = 736 W
+        <div class="var-list">
+          <em style="color:var(--text3)">Então: P(W) = P(CV) × 736</em><br>
+          <em style="color:var(--text3)">Exemplo: 5 CV = 5 × 736 = 3.680 W = 3,68 kW</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOTOR FORMULAS -->
+    <div class="page" id="page-motor-formulas">
+      <h2 class="section-title">Fórmulas — Corrente de Motores</h2>
+
+      <h3 class="sub-title">Sistema Monofásico (1 fase + neutro)</h3>
+      <div class="formula-box">
+        I = P / (V × FP × η)
+        <div class="var-list">
+          <b>I</b> = Corrente de linha [A]<br>
+          <b>P</b> = Potência ativa [W]<br>
+          <b>V</b> = Tensão [V] (fase-neutro)<br>
+          <b>FP</b> = Fator de potência<br>
+          <b>η</b> = Rendimento (eta)
+        </div>
+      </div>
+
+      <h3 class="sub-title">Sistema Trifásico (3 fases)</h3>
+      <div class="formula-box">
+        I = P / (√3 × V × FP × η)
+        <div class="var-list">
+          <b>I</b> = Corrente de linha [A]<br>
+          <b>P</b> = Potência ativa [W]<br>
+          <b>V</b> = Tensão de linha [V] (ex: 380V)<br>
+          <b>√3</b> ≈ 1,732 (fator do sistema trifásico)<br>
+          <b>FP</b> = Fator de potência<br>
+          <b>η</b> = Rendimento
+        </div>
+      </div>
+
+      <div class="card yellow-border">
+        <h4 style="color:var(--accent3); margin-bottom:10px">🤔 Por que aparece o √3 na fórmula trifásica?</h4>
+        <p class="desc" style="margin:0">No sistema trifásico, as 3 fases estão defasadas 120° entre si. A potência total não é simplesmente o triplo de uma fase — é √3 vezes maior por causa da vetorial das defasagens. Pense assim: 3 trabalhadores não trabalhando exatamente juntos entregam menos do que 3× um trabalhador solo, mas a relação matemática exata resulta no √3.</p>
+        <p class="desc" style="margin-top:8px; margin-bottom:0">Nas provas: <strong style="color:var(--accent)">sempre que for trifásico, coloca √3 = 1,732 e multiplica pela tensão</strong>.</p>
+      </div>
+    </div>
+
+    <!-- MOTOR EXEMPLOS -->
+    <div class="page" id="page-motor-exemplos">
+      <h2 class="section-title">Exemplos Resolvidos — Corrente de Motores</h2>
+
+      <div class="card green-border">
+        <h3 style="color:var(--green); margin-bottom:16px">📘 Exemplo 1 — Motor 5 CV Trifásico 220V</h3>
+        <p class="desc"><strong>Dados:</strong> Motor 5 CV, 220V trifásico, FP = 0,85, η = 0,90. Calcule a corrente nominal.</p>
+
+        <div class="step-box">
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">1</div>
+            <div class="step-content">
+              <strong>Converter CV → Watts</strong>
+              <p>P = 5 × 736 = <span style="color:var(--accent); font-family:var(--mono)">3.680 W</span></p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">2</div>
+            <div class="step-content">
+              <strong>Aplicar a fórmula trifásica</strong>
+              <p>I = P / (√3 × V × FP × η)</p>
+              <p>I = 3.680 / (1,732 × 220 × 0,85 × 0,90)</p>
+              <p>I = 3.680 / (1,732 × 220 × 0,765)</p>
+              <p>I = 3.680 / 291,2</p>
+              <p>I = <span style="color:var(--accent); font-family:var(--mono); font-size:20px">12,64 A</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="nota" style="margin-top:8px">
+          <strong>Interpretação:</strong> Este motor de 5 CV consumirá aproximadamente 12,6 A em regime nominal. Para o disjuntor, usamos tipicamente 125% da corrente nominal = ~16 A. Para o cabo, consultamos a tabela NBR 5410.
+        </div>
+      </div>
+
+      <div class="card green-border">
+        <h3 style="color:var(--green); margin-bottom:16px">📘 Exemplo 2 — Motor 10 CV Trifásico 380V</h3>
+        <p class="desc"><strong>Dados:</strong> Motor 10 CV, 380V trifásico, FP = 0,82, η = 0,88. Calcule a corrente nominal.</p>
+
+        <div class="step-box">
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">1</div>
+            <div class="step-content">
+              <strong>Converter CV → Watts</strong>
+              <p>P = 10 × 736 = <span style="color:var(--accent); font-family:var(--mono)">7.360 W</span></p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--green)">2</div>
+            <div class="step-content">
+              <strong>Aplicar a fórmula trifásica</strong>
+              <p>I = 7.360 / (1,732 × 380 × 0,82 × 0,88)</p>
+              <p>I = 7.360 / (1,732 × 380 × 0,7216)</p>
+              <p>I = 7.360 / 474,9</p>
+              <p>I = <span style="color:var(--accent); font-family:var(--mono); font-size:20px">15,5 A</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="nota" style="margin-top:8px">
+          <strong>Observe:</strong> Dobramos a potência (5→10 CV) mas a corrente não dobrou (12,6→15,5 A) porque a tensão também mudou (220→380V). Mais tensão = menos corrente para a mesma potência!
+        </div>
+      </div>
+    </div>
+
+    <!-- MOTOR TABELA -->
+    <div class="page" id="page-motor-tabela">
+      <h2 class="section-title">Tabela de Conversão CV × Watts</h2>
+      <p class="desc">Esta tabela é essencial para resolver exercícios rapidamente. Decore pelo menos os valores mais comuns (1, 5, 10 e 15 CV).</p>
+
+      <div class="card">
+        <table>
+          <tr>
+            <th>Potência (CV)</th>
+            <th>Potência (W)</th>
+            <th>Potência (kW)</th>
+            <th>Uso típico</th>
+          </tr>
+          <tr><td>0,5 CV</td><td>368 W</td><td>0,37 kW</td><td>Bomba d'água residencial</td></tr>
+          <tr><td><strong>1 CV</strong></td><td><strong>736 W</strong></td><td><strong>0,74 kW</strong></td><td>Compressor doméstico</td></tr>
+          <tr><td>2 CV</td><td>1.472 W</td><td>1,47 kW</td><td>Serra circular</td></tr>
+          <tr><td>3 CV</td><td>2.208 W</td><td>2,21 kW</td><td>Compressor 10 pés</td></tr>
+          <tr><td><strong>5 CV</strong></td><td><strong>3.680 W</strong></td><td><strong>3,68 kW</strong></td><td>Torno mecânico pequeno</td></tr>
+          <tr><td>7,5 CV</td><td>5.520 W</td><td>5,52 kW</td><td>Betoneira industrial</td></tr>
+          <tr><td><strong>10 CV</strong></td><td><strong>7.360 W</strong></td><td><strong>7,36 kW</strong></td><td>Compressor médio / bomba</td></tr>
+          <tr><td><strong>15 CV</strong></td><td><strong>11.040 W</strong></td><td><strong>11,04 kW</strong></td><td>Esteira transportadora</td></tr>
+          <tr><td>20 CV</td><td>14.720 W</td><td>14,72 kW</td><td>Guincho / elevador</td></tr>
+          <tr><td>25 CV</td><td>18.400 W</td><td>18,4 kW</td><td>Bomba de recalque</td></tr>
+          <tr><td>30 CV</td><td>22.080 W</td><td>22,08 kW</td><td>Ventilador industrial</td></tr>
+          <tr><td>50 CV</td><td>36.800 W</td><td>36,8 kW</td><td>Motor de forno industrial</td></tr>
+          <tr><td>100 CV</td><td>73.600 W</td><td>73,6 kW</td><td>Bomba de poço artesiano</td></tr>
+        </table>
+      </div>
+
+      <div class="nota">
+        <strong>💡 Macete:</strong> Para conversão rápida, multiplique o valor em CV por 736. Para valores redondos, use a aproximação: 1 CV ≈ 0,75 kW. Mas na prova, use sempre 736 W para precisão.
+      </div>
+    </div>
+
+    <!-- DICAS COTIDIANO -->
+    <div class="page" id="page-dicas-cotidiano">
+      <h2 class="section-title">Como Entender Isso Sem Trabalhar na Indústria</h2>
+      <p class="desc">Você já usa esses conceitos todos os dias sem perceber. Vamos conectar o que você conhece com o que estuda.</p>
+
+      <div class="card accent-border">
+        <h3 style="color:var(--accent); margin-bottom:14px">🚿 Chuveiro Elétrico</h3>
+        <p class="desc">Um chuveiro de 7.000W alimentado por 220V é uma <strong>carga resistiva</strong> — FP = 1 (sem espuma!). A corrente é:</p>
+        <div class="formula-box" style="font-size:15px">I = P / V = 7.000 / 220 = 31,8 A</div>
+        <p class="desc">Por isso o chuveiro precisa de um disjuntor de 40A e fio grosso (6mm²). Se o fio for fino, esquenta e pega fogo. <strong>É exatamente isso que um eletricista industrial calcula para qualquer motor!</strong></p>
+      </div>
+
+      <div class="card purple-border">
+        <h3 style="color:var(--accent2); margin-bottom:14px">❄️ Geladeira</h3>
+        <p class="desc">A geladeira tem um motor no compressor. Quando você liga a geladeira, ela puxa uma corrente muito alta por alguns segundos — a <strong>corrente de partida</strong> — que pode ser 5 a 7 vezes a corrente normal. É por isso que a luz pisca quando a geladeira liga. Na indústria, motores grandes podem derrubar a tensão da rede na partida direta. É por isso que se usa <strong>partida estrela-triângulo</strong> ou <strong>soft starters</strong>.</p>
+      </div>
+
+      <div class="card yellow-border">
+        <h3 style="color:var(--accent3); margin-bottom:14px">💨 Ventilador de Teto</h3>
+        <p class="desc">Um ventilador é uma carga <strong>indutiva</strong> — tem motor. O FP é menor que 1 (tem espuma). O capacitor que fica dentro do ventilador serve para corrigir o fator de potência e melhorar o desempenho. Quando o ventilador fica ronronando mas não gira direito, muitas vezes é o capacitor que queimou!</p>
+      </div>
+
+      <div class="card green-border">
+        <h3 style="color:var(--green); margin-bottom:14px">🔧 Compressor de Ar</h3>
+        <p class="desc">Um compressor de garagem com motor de 2 CV (1.472W) a 220V com FP=0,85 e η=0,88:</p>
+        <div class="formula-box" style="font-size:15px">I = 1.472 / (220 × 0,85 × 0,88) = 1.472 / 164,6 ≈ 8,9 A</div>
+        <p class="desc">Na plaquinha do compressor geralmente está escrito "10A". Faz sentido! O fabricante já incluiu uma margem de segurança.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:14px">🏠 Caixa d'Água — Automação Simples</h3>
+        <p class="desc">A bomba da caixa d'água com boia elétrica é o seu primeiro exemplo de automação! A boia (sensor de nível) liga e desliga o motor (atuador) automaticamente. Na indústria, isso vira um <strong>CLP (Controlador Lógico Programável)</strong> controlando bombas de grande porte com múltiplos sensores.</p>
+      </div>
+    </div>
+
+    <!-- DICAS PROVAS -->
+    <div class="page" id="page-dicas-provas">
+      <h2 class="section-title">Macetes para Provas</h2>
+
+      <h3 class="sub-title">📌 Fórmulas Mais Cobradas</h3>
+      <div class="card">
+        <table>
+          <tr><th>Fórmula</th><th>Quando usar</th></tr>
+          <tr><td><code style="color:var(--accent)">I = P / (V × FP × η)</code></td><td>Motor monofásico</td></tr>
+          <tr><td><code style="color:var(--accent)">I = P / (1,732 × V × FP × η)</code></td><td>Motor trifásico</td></tr>
+          <tr><td><code style="color:var(--accent)">P = V × I × FP</code></td><td>Potência ativa de qualquer carga</td></tr>
+          <tr><td><code style="color:var(--accent)">S = V × I</code></td><td>Potência aparente</td></tr>
+          <tr><td><code style="color:var(--accent)">FP = P / S</code></td><td>Calcular o fator de potência</td></tr>
+          <tr><td><code style="color:var(--accent)">P² + Q² = S²</code></td><td>Encontrar a terceira potência</td></tr>
+          <tr><td><code style="color:var(--accent)">1 CV = 736 W</code></td><td>Toda questão com motor em CV</td></tr>
+        </table>
+      </div>
+
+      <h3 class="sub-title">⚠️ Erros Mais Comuns</h3>
+      <div class="tip-card">
+        <div class="tip-icon">❌</div>
+        <div class="tip-body">
+          <strong>Esquecer de converter CV → Watts</strong>
+          <p>Se o enunciado der potência em CV e você usar na fórmula diretamente, o resultado será absurdo. SEMPRE converta: P(W) = CV × 736.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">❌</div>
+        <div class="tip-body">
+          <strong>Usar fórmula monofásica em sistema trifásico</strong>
+          <p>Se a questão disser "trifásico" ou "3 fases", obrigatoriamente use o √3 = 1,732 na fórmula. A fórmula monofásica dará resultado errado.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">❌</div>
+        <div class="tip-body">
+          <strong>Confundir kW com kVA</strong>
+          <p>kW é potência ativa (trabalho real). kVA é potência aparente (o que a rede entrega). São diferentes quando FP ≠ 1!</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">❌</div>
+        <div class="tip-body">
+          <strong>Ignorar o rendimento η</strong>
+          <p>Se a questão der o rendimento, USE. Se não der, não invente — ou assuma η = 1 (100%) se o enunciado não mencionar.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">✅ Como Identificar o Tipo de Questão</h3>
+      <div class="tip-card">
+        <div class="tip-icon">🔍</div>
+        <div class="tip-body">
+          <strong>É monofásico ou trifásico?</strong>
+          <p>Procure palavras: "monofásico", "bifásico", "1 fase" → sem √3. "Trifásico", "3 fases", "380V com 3 fios" → com √3 = 1,732.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🔍</div>
+        <div class="tip-body">
+          <strong>Quando usar o rendimento η?</strong>
+          <p>A questão vai dar a potência mecânica (o que sai do motor) e pedir a corrente elétrica (o que entra). Sempre que houver essa situação, precisa do η. Se a questão der a potência elétrica diretamente em Watts, não use η.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🔍</div>
+        <div class="tip-body">
+          <strong>Quando usar o fator de potência?</strong>
+          <p>Sempre que houver motores, transformadores ou lâmpadas fluorescentes (cargas indutivas). Para chuveiro, resistência de forno ou lâmpada incandescente (cargas resistivas), o FP = 1 e pode ser omitido.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAT DIVISAO -->
+    <div class="page" id="page-mat-divisao">
+      <h2 class="section-title">Módulo 1 — Aprendendo a Dividir</h2>
+      <p class="desc">A divisão é a base de quase toda fórmula elétrica. Se você dominar dividir bem, 80% das contas de automação ficam fáceis. Vamos do zero.</p>
+
+      <h3 class="sub-title">O que é dividir, de verdade?</h3>
+      <div class="analogy">
+        <div class="icon-big">🍕</div>
+        <div class="text">
+          <strong>Pense em Pizza</strong>
+          <p>Dividir é "repartir igualmente". Se você tem 12 pedaços de pizza e quer dividir entre 4 amigos, cada um recebe 12 ÷ 4 = 3 pedaços. Em elétrica é a mesma lógica: "Eu tenho 2.200 W de potência e quero saber quanto de corrente isso representa para cada Volt." A divisão sempre responde: <em>"quanto cabe X vezes dentro de Y?"</em></p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Divisão Simples — Passo a Passo</h3>
+      <div class="math-step-visual">
+        <div class="division-anim">
+          <div class="division-box"><div class="num">84</div><div class="lbl">Dividendo</div></div>
+          <div class="division-op">÷</div>
+          <div class="division-box"><div class="num">4</div><div class="lbl">Divisor</div></div>
+          <div class="division-op">=</div>
+          <div class="division-box" style="border-color:var(--accent)"><div class="num" style="color:var(--accent)">21</div><div class="lbl">Quociente</div></div>
+        </div>
+      </div>
+      <div class="step-box">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content"><strong>Pergunte: quantas vezes o 4 cabe no 8?</strong><p>4 cabe 2 vezes em 8 (4×2=8). Escreva "2" e desça o próximo número.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content"><strong>Agora: quantas vezes o 4 cabe no 4?</strong><p>4 cabe exatamente 1 vez. Escreva "1". Resultado: 21.</p></div>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Divisão com Vírgula (Resultado Decimal)</h3>
+      <p class="desc">Quando a divisão não é exata, o resultado continua com vírgula. Isso é extremamente comum em elétrica!</p>
+      <div class="formula-box" style="font-size:16px">
+        220 ÷ 8 = 27,5
+        <div class="var-list">Sobrou resto 4. Acrescente uma vírgula e um zero: 40 ÷ 8 = 5. Resultado: 27,5</div>
+      </div>
+
+      <div class="analogy">
+        <div class="icon-big">💡</div>
+        <div class="text">
+          <strong>Macete Rápido</strong>
+          <p>Quando o resto não é zero, multiplique o resto por 10 e continue dividindo, colocando a vírgula no resultado no momento em que você "completar" o número inteiro. Em uma calculadora, isso é automático — mas entender o processo ajuda a verificar se o resultado faz sentido.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Divisão por 10, 100 e 1000</h3>
+      <div class="card accent-border">
+        <p class="desc" style="margin:0 0 10px">Esse é o macete mais usado em conversões elétricas (W → kW, mA → A, etc):</p>
+        <table>
+          <tr><th>Operação</th><th>O que fazer</th><th>Exemplo</th></tr>
+          <tr><td>÷ 10</td><td>Mover a vírgula 1 casa p/ esquerda</td><td>1.500 ÷ 10 = 150,0 → 150</td></tr>
+          <tr><td>÷ 100</td><td>Mover a vírgula 2 casas p/ esquerda</td><td>1.500 ÷ 100 = 15,00 → 15</td></tr>
+          <tr><td>÷ 1000</td><td>Mover a vírgula 3 casas p/ esquerda</td><td>1.500 ÷ 1000 = 1,500 → 1,5</td></tr>
+        </table>
+        <p class="desc" style="margin:10px 0 0"><strong>Aplicação real:</strong> 7.360 W ÷ 1000 = 7,36 kW. Você faz isso toda vez que converte unidades!</p>
+      </div>
+
+      <h3 class="sub-title">Divisão de Números Grandes</h3>
+      <p class="desc">Em fórmulas trifásicas, você frequentemente divide por um número "composto", como (1,732 × 380 × 0,85 × 0,90). A dica é: <strong>resolva o denominador inteiro primeiro</strong>, depois faça uma única divisão.</p>
+      <div class="step-box">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content"><strong>Calcule o denominador completo</strong><p>1,732 × 380 × 0,85 × 0,90 = 503,6 (multiplique em sequência, dois números por vez)</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content"><strong>Divida o numerador por esse valor único</strong><p>7.360 ÷ 503,6 = 14,6 A</p></div>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Divisão na Prática Elétrica</h3>
+      <div class="card green-border">
+        <p class="desc" style="margin:0">A fórmula de corrente <code style="color:var(--accent)">I = P / (V × FP × η)</code> é, no fundo, uma grande divisão. O numerador (P) é "o que eu tenho de potência". O denominador é "o efeito combinado de tensão, eficiência elétrica e magnética". Dividir um pelo outro me diz quantos Ampères circulam.</p>
+      </div>
+
+      <h3 class="sub-title">⚠️ Erros Comuns na Divisão</h3>
+      <div class="error-common">
+        <div class="err-icon">❌</div>
+        <div><strong>Dividir na ordem errada</strong><p>P ÷ V é diferente de V ÷ P! Sempre o que eu "tenho/quero saber" fica em cima (numerador), o que "divide/reparte" fica embaixo (denominador).</p></div>
+      </div>
+      <div class="error-common">
+        <div class="err-icon">❌</div>
+        <div><strong>Esquecer de multiplicar tudo o denominador antes de dividir</strong><p>Em I = P/(V×FP×η), o aluno divide só por V e esquece de multiplicar por FP e η também.</p></div>
+      </div>
+      <div class="error-common">
+        <div class="err-icon">❌</div>
+        <div><strong>Errar a posição da vírgula</strong><p>22,08 ÷ 1000 não é 2,208 nem 0,02208 — é 0,02208... espera, são 3 casas: 22,08 → 0,02208. Conte as casas com cuidado!</p></div>
+      </div>
+
+      <h3 class="sub-title">🎯 Exercite-se</h3>
+      <div class="mini-exercise">
+        <div class="mini-q">1) Quanto é 7.360 ÷ 1000? (resultado em kW)</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-div-1" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-div-1', 7.36, 'mini-fb-div-1')">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-div-1"></div>
+      </div>
+      <div class="mini-exercise">
+        <div class="mini-q">2) Quanto é 18.400 ÷ 8? (divisão exata)</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-div-2" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-div-2', 2300, 'mini-fb-div-2')">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-div-2"></div>
+      </div>
+      <div class="mini-exercise">
+        <div class="mini-q">3) Um motor de 3.680W a 220V (FP=1, η=1). Calcule I = P/V.</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-div-3" placeholder="Sua resposta em A">
+          <button onclick="checkMini('mini-div-3', 16.73, 'mini-fb-div-3', 0.05)">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-div-3"></div>
+      </div>
+    </div>
+
+    <!-- MAT RAIZ -->
+    <div class="page" id="page-mat-raiz">
+      <h2 class="section-title">Módulo 2 — Raiz Quadrada</h2>
+      <p class="desc">A raiz quadrada aparece toda hora em elétrica — especialmente o famoso <strong>√3 = 1,732</strong> dos sistemas trifásicos. Vamos entender de onde ela vem e como calculá-la sem medo.</p>
+
+      <h3 class="sub-title">O que é Raiz Quadrada?</h3>
+      <div class="analogy">
+        <div class="icon-big">⬜</div>
+        <div class="text">
+          <strong>Pense em um Quadrado</strong>
+          <p>Se um quadrado tem área de 25 m², qual é o tamanho do lado? A resposta é a raiz quadrada de 25, que é 5 (porque 5×5=25). A raiz quadrada "desfaz" uma multiplicação de um número por ele mesmo.</p>
+        </div>
+      </div>
+
+      <div class="formula-box">
+        √25 = 5 &nbsp;&nbsp;&nbsp; porque &nbsp;&nbsp;&nbsp; 5 × 5 = 25
+      </div>
+
+      <h3 class="sub-title">Como Descobrir Sem Calculadora</h3>
+      <div class="step-box">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content"><strong>Encontre os dois "quadrados perfeitos" mais próximos</strong><p>Quero √50. Sei que 7×7=49 e 8×8=64. Então √50 está entre 7 e 8.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content"><strong>Veja o quão perto está de cada um</strong><p>50 está bem perto de 49 (diferença de 1) e mais longe de 64 (diferença de 14). Então a raiz deve ser perto de 7, algo como 7,1.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content"><strong>Resultado real: √50 ≈ 7,07</strong><p>Sua estimativa de "perto de 7,1" já estava ótima!</p></div>
+        </div>
+      </div>
+
+      <div class="card accent-border">
+        <h4 style="color:var(--accent); margin-bottom:10px">📋 Quadrados Perfeitos para Memorizar</h4>
+        <table>
+          <tr><th>n</th><th>n²</th><th>n</th><th>n²</th></tr>
+          <tr><td>1</td><td>1</td><td>6</td><td>36</td></tr>
+          <tr><td>2</td><td>4</td><td>7</td><td>49</td></tr>
+          <tr><td>3</td><td>9</td><td>8</td><td>64</td></tr>
+          <tr><td>4</td><td>16</td><td>9</td><td>81</td></tr>
+          <tr><td>5</td><td>25</td><td>10</td><td>100</td></tr>
+        </table>
+        <p class="desc" style="margin-top:10px; margin-bottom:0">Decorando esses 10, você consegue estimar qualquer raiz quadrada rapidamente!</p>
+      </div>
+
+      <h3 class="sub-title">Por que aparece √2 e √3 na elétrica?</h3>
+      <div class="card purple-border">
+        <h4 style="color:var(--accent2); margin-bottom:10px">⚡ De onde vem o √3 = 1,732</h4>
+        <p class="desc">Em um sistema trifásico, temos 3 fases defasadas entre si em <strong>120°</strong>. Quando calculamos a relação entre a tensão de linha (entre duas fases) e a tensão de fase (entre uma fase e o neutro), aparece naturalmente um fator de √3.</p>
+        <p class="desc" style="margin:0">Matematicamente, isso vem da trigonometria: a diferença vetorial entre duas tensões senoidais defasadas 120° resulta em uma amplitude multiplicada por √3 ≈ 1,732. Você não precisa provar isso na prova — só saber que <strong style="color:var(--accent)">todo sistema trifásico usa esse fator</strong>.</p>
+      </div>
+
+      <div class="card yellow-border">
+        <h4 style="color:var(--accent3); margin-bottom:10px">⚡ De onde vem o √2 = 1,414</h4>
+        <p class="desc" style="margin:0">O √2 aparece quando convertemos valores de <strong>pico</strong> para valores <strong>RMS (eficaz)</strong> em corrente alternada. A tensão "230V" da rede, por exemplo, é o valor eficaz — o valor de pico real chega a 230 × √2 ≈ 325V. Isso é importante para dimensionar isolamento de cabos e capacitores.</p>
+      </div>
+
+      <h3 class="sub-title">Exemplo Prático: Calculando Corrente Trifásica</h3>
+      <div class="card green-border">
+        <p class="desc">Motor de 10 CV, 380V, FP=0,85, η=0,90. Use √3 ≈ 1,732:</p>
+        <div class="formula-box" style="font-size:15px">I = 7.360 / (1,732 × 380 × 0,85 × 0,90) = 7.360 / 503,6 ≈ 14,6 A</div>
+        <p class="desc" style="margin:0">Veja que o √3 simplesmente entra como mais um número multiplicando o denominador. Trate-o como uma constante: 1,732.</p>
+      </div>
+
+      <h3 class="sub-title">🎯 Exercite-se</h3>
+      <div class="mini-exercise">
+        <div class="mini-q">1) Qual é a raiz quadrada de 64?</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-raiz-1" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-raiz-1', 8, 'mini-fb-raiz-1')">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-raiz-1"></div>
+      </div>
+      <div class="mini-exercise">
+        <div class="mini-q">2) Em sistemas trifásicos, qual é o valor aproximado de √3?</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-raiz-2" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-raiz-2', 1.732, 'mini-fb-raiz-2', 0.01)">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-raiz-2"></div>
+      </div>
+      <div class="mini-exercise">
+        <div class="mini-q">3) Estime: entre quais dois números inteiros está √90?</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-raiz-3" placeholder="Ex: 9 e 10">
+          <button onclick="checkMiniText('mini-raiz-3', ['9 e 10','9,10','entre 9 e 10'], 'mini-fb-raiz-3')">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-raiz-3"></div>
+      </div>
+    </div>
+
+    <!-- MAT FRACOES -->
+    <div class="page" id="page-mat-fracoes">
+      <h2 class="section-title">Módulo 3 — Frações</h2>
+      <p class="desc">Frações aparecem em desenhos técnicos (3/4", 1/2"), em proporções de engrenagens e em fórmulas elétricas. Vamos relembrar o básico com aplicação real.</p>
+
+      <h3 class="sub-title">O que é uma fração?</h3>
+      <div class="analogy">
+        <div class="icon-big">🔧</div>
+        <div class="text">
+          <strong>Pense em Parafusos e Tubos</strong>
+          <p>Quando você compra um tubo de 3/4 de polegada, está dizendo "três partes de um total de quatro". O número de cima (numerador) é quantas partes você tem. O número de baixo (denominador) é em quantas partes o todo foi dividido.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Soma e Subtração de Frações</h3>
+      <div class="card accent-border">
+        <p class="desc"><strong>Mesmo denominador:</strong> some/subtraia só os numeradores.</p>
+        <div class="formula-box" style="font-size:16px">1/4 + 2/4 = 3/4</div>
+        <p class="desc"><strong>Denominadores diferentes:</strong> encontre um denominador comum primeiro (MMC) e depois some.</p>
+        <div class="formula-box" style="font-size:16px">1/2 + 1/4 = 2/4 + 1/4 = 3/4</div>
+      </div>
+
+      <h3 class="sub-title">Multiplicação e Divisão de Frações</h3>
+      <div class="card purple-border">
+        <p class="desc"><strong>Multiplicar:</strong> numerador × numerador, denominador × denominador.</p>
+        <div class="formula-box" style="font-size:16px">2/3 × 3/4 = 6/12 = 1/2</div>
+        <p class="desc"><strong>Dividir:</strong> multiplique pelo inverso da segunda fração ("inverte e multiplica").</p>
+        <div class="formula-box" style="font-size:16px">2/3 ÷ 1/4 = 2/3 × 4/1 = 8/3 = 2,67</div>
+      </div>
+
+      <h3 class="sub-title">Aplicações em Medidas e Desenho Técnico</h3>
+      <div class="card green-border">
+        <p class="desc" style="margin:0">Tubulações hidráulicas e elétricas (conduítes) usam medidas fracionárias em polegadas: 1/2", 3/4", 1", 1.1/4". Para somar dois trechos de 3/4" e 1/2", você precisa do MMC entre 4 e 2 (que é 4): 3/4 + 2/4 = 5/4" = 1.1/4 polegada.</p>
+      </div>
+
+      <h3 class="sub-title">🎯 Exercite-se</h3>
+      <div class="mini-exercise">
+        <div class="mini-q">1) Quanto é 1/2 + 1/4? (resposta como decimal, ex: 0.75)</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-frac-1" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-frac-1', 0.75, 'mini-fb-frac-1', 0.01)">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-frac-1"></div>
+      </div>
+      <div class="mini-exercise">
+        <div class="mini-q">2) Quanto é 3/4 × 2/3? (resposta como decimal)</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-frac-2" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-frac-2', 0.5, 'mini-fb-frac-2', 0.01)">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-frac-2"></div>
+      </div>
+    </div>
+
+    <!-- MAT PORCENTAGEM -->
+    <div class="page" id="page-mat-porcentagem">
+      <h2 class="section-title">Módulo 4 — Porcentagem</h2>
+      <p class="desc">Rendimento, fator de potência e perdas são quase sempre expressos em porcentagem. Aprenda a calcular de cabeça, sem calculadora.</p>
+
+      <h3 class="sub-title">Regra dos 10%</h3>
+      <div class="analogy">
+        <div class="icon-big">🔢</div>
+        <div class="text">
+          <strong>O Macete Mais Útil</strong>
+          <p>Para achar 10% de qualquer número, basta mover a vírgula uma casa para a esquerda. 10% de 380 = 38. 10% de 7.360 = 736 (Ei, é o mesmo número do CV→Watts! Coincidência? Não — é só matemática.)</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Regra dos 50%</h3>
+      <div class="card accent-border">
+        <p class="desc" style="margin:0">50% é simplesmente a metade. 50% de 220 = 110. Para 25%, divida por 4. Para 75%, calcule 50% + 25%.</p>
+      </div>
+
+      <h3 class="sub-title">Como Calcular Qualquer Porcentagem Mentalmente</h3>
+      <div class="step-box">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content"><strong>Quebre em partes fáceis (10%, 5%, 1%)</strong><p>Quero 85% de 7.360. 85% = 50% + 30% + 5%.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content"><strong>Calcule cada parte</strong><p>50% de 7.360 = 3.680 | 30% de 7.360 = 2.208 | 5% de 7.360 = 368</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content"><strong>Some tudo</strong><p>3.680 + 2.208 + 368 = 6.256 (isso é 85% de 7.360!)</p></div>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Aplicação: Rendimento (η)</h3>
+      <div class="card green-border">
+        <p class="desc">Rendimento de 90% significa que, de toda energia elétrica que entra no motor, apenas 90% sai como energia mecânica útil. Os outros 10% se perdem como calor.</p>
+        <div class="formula-box" style="font-size:15px">η = Potência útil saída / Potência total entrada</div>
+        <p class="desc" style="margin:0">Se um motor recebe 1.000W e tem η=0,90, ele entrega 900W de trabalho mecânico e perde 100W em calor.</p>
+      </div>
+
+      <h3 class="sub-title">Aplicação: Fator de Potência</h3>
+      <div class="card purple-border">
+        <p class="desc" style="margin:0">Quando dizemos "FP = 80%" ou "FP = 0,8" é a mesma coisa — só formas diferentes de escrever a mesma porcentagem. 80% da energia entregue (S) se torna trabalho útil (P).</p>
+      </div>
+
+      <h3 class="sub-title">Aplicação: Perdas em Cabos</h3>
+      <div class="card yellow-border">
+        <p class="desc" style="margin:0">Se um cabo tem 3% de perda por queda de tensão e a tensão nominal é 380V, a queda real é 380 × 0,03 = 11,4V. A tensão que chega no motor é 380 - 11,4 = 368,6V.</p>
+      </div>
+
+      <h3 class="sub-title">🎯 Exercite-se</h3>
+      <div class="mini-exercise">
+        <div class="mini-q">1) Quanto é 10% de 4.500?</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-pct-1" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-pct-1', 450, 'mini-fb-pct-1')">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-pct-1"></div>
+      </div>
+      <div class="mini-exercise">
+        <div class="mini-q">2) Um motor recebe 2.000W com η = 88%. Quantos Watts ele entrega como trabalho útil?</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-pct-2" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-pct-2', 1760, 'mini-fb-pct-2')">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-pct-2"></div>
+      </div>
+    </div>
+
+    <!-- MAT REGRA3 -->
+    <div class="page" id="page-mat-regra3">
+      <h2 class="section-title">Módulo 5 — Regra de Três</h2>
+      <p class="desc">A regra de três resolve praticamente qualquer problema de proporção: tempo de produção, corrente versus potência, escala de desenhos. Vamos dominar a simples e a composta.</p>
+
+      <h3 class="sub-title">Regra de Três Simples</h3>
+      <div class="analogy">
+        <div class="icon-big">🏭</div>
+        <div class="text">
+          <strong>Pense em Produção</strong>
+          <p>Se uma máquina produz 100 peças em 2 horas, quantas peças produz em 5 horas? Você está comparando duas grandezas que crescem juntas (proporção direta).</p>
+        </div>
+      </div>
+
+      <div class="math-step-visual">
+        <div style="text-align:center; font-size:16px; line-height:2">
+          100 peças —— 2 horas<br>
+          X peças —— 5 horas<br><br>
+          <span style="color:var(--accent)">X = (100 × 5) / 2 = 250 peças</span>
+        </div>
+      </div>
+
+      <div class="step-box">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content"><strong>Identifique se é direta ou inversa</strong><p>Direta: as duas grandezas crescem juntas (mais horas = mais peças). Inversa: uma cresce, a outra diminui (mais trabalhadores = menos tempo).</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content"><strong>Monte a proporção em cruz</strong><p>Multiplique diagonalmente (cruzado) e divida pelo valor restante.</p></div>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Aplicação: Potência e Corrente</h3>
+      <div class="card accent-border">
+        <p class="desc">Se um motor de 5 CV consome 12,6 A, qual seria a corrente aproximada de um motor de 10 CV nas mesmas condições (mesma tensão, FP, η)?</p>
+        <div class="formula-box" style="font-size:15px">5 CV —— 12,6 A<br>10 CV —— X<br>X = (10 × 12,6) / 5 = 25,2 A</div>
+        <p class="desc" style="margin:0">É uma proporção direta — dobrando a potência, dobra a corrente (mantendo o resto constante).</p>
+      </div>
+
+      <h3 class="sub-title">Regra de Três Composta</h3>
+      <p class="desc">Usada quando há <strong>3 ou mais grandezas</strong> relacionadas ao mesmo tempo.</p>
+      <div class="card purple-border">
+        <p class="desc"><strong>Exemplo:</strong> 4 máquinas produzem 800 peças em 5 dias. Quantas peças 6 máquinas produzem em 8 dias?</p>
+        <div class="formula-box" style="font-size:14px">
+          4 máq. — 5 dias — 800 peças<br>
+          6 máq. — 8 dias — X peças<br><br>
+          X = 800 × (6/4) × (8/5) = 800 × 1,5 × 1,6 = 1.920 peças
+        </div>
+        <p class="desc" style="margin:0">Multiplique cada razão (sempre coerente com direta ou inversa) ao valor conhecido.</p>
+      </div>
+
+      <h3 class="sub-title">Aplicação: Tempo de Produção em Automação</h3>
+      <div class="card green-border">
+        <p class="desc" style="margin:0">Uma esteira transporta 50 caixas em 10 minutos. Se a velocidade do motor for aumentada (via inversor de frequência) de modo a transportar 50% mais rápido, em quanto tempo ela transporta 50 caixas? Resposta: 10 ÷ 1,5 = 6,67 minutos (proporção inversa entre velocidade e tempo).</p>
+      </div>
+
+      <h3 class="sub-title">🎯 Exercite-se</h3>
+      <div class="mini-exercise">
+        <div class="mini-q">1) Se 3 motores consomem 36A juntos, quanto consomem 5 motores idênticos?</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-r3-1" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-r3-1', 60, 'mini-fb-r3-1')">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-r3-1"></div>
+      </div>
+      <div class="mini-exercise">
+        <div class="mini-q">2) Uma esteira faz 100 peças em 4 horas. Quantas horas leva para fazer 250 peças?</div>
+        <div class="mini-input-row">
+          <input type="text" id="mini-r3-2" placeholder="Sua resposta">
+          <button onclick="checkMini('mini-r3-2', 10, 'mini-fb-r3-2')">Verificar</button>
+        </div>
+        <div class="mini-feedback" id="mini-fb-r3-2"></div>
+      </div>
+    </div>
+
+    <!-- MAT MACETES -->
+    <div class="page" id="page-mat-macetes">
+      <h2 class="section-title">Módulo 6 — Macetes e Atalhos</h2>
+      <p class="desc">Para cada fórmula importante, veja a versão oficial, como decorar rapidamente, como raciocinar sem decorar, e os erros mais comuns.</p>
+
+      <div class="macete-card">
+        <h3 style="color:var(--accent); margin-bottom:6px">⚡ Corrente de Motor Trifásico</h3>
+        <div class="macete-formula">I = P / (√3 × V × FP × η)</div>
+        <div class="macete-row decorar">
+          <div class="macete-tag">Decorar</div>
+          <p>Pense na frase: "Potência dividido por Raiz-de-3, Vezes, Fator, vezes Eficiência" — "PR-VFE".</p>
+        </div>
+        <div class="macete-row raciocinio">
+          <div class="macete-tag">Raciocínio</div>
+          <p>A corrente é "quanto eu preciso puxar da rede" para entregar a potência P. O denominador representa todas as "perdas e ajustes" do caminho: o fator trifásico (√3), a tensão disponível (V), a eficiência elétrica (FP) e a eficiência mecânica (η). Quanto maior o denominador, menor a corrente necessária.</p>
+        </div>
+        <div class="macete-row erro">
+          <div class="macete-tag">Erro comum</div>
+          <p>Esquecer de converter CV para Watts antes de aplicar a fórmula, ou esquecer o √3 quando o sistema é trifásico.</p>
+        </div>
+      </div>
+
+      <div class="macete-card">
+        <h3 style="color:var(--accent3); margin-bottom:6px">🔋 Fator de Potência</h3>
+        <div class="macete-formula">FP = P / S</div>
+        <div class="macete-row decorar">
+          <div class="macete-tag">Decorar</div>
+          <p>"FP é sempre Ativa sobre Aparente" — a letra que vem primeiro no alfabeto (A de Ativa) fica em cima.</p>
+        </div>
+        <div class="macete-row raciocinio">
+          <div class="macete-tag">Raciocínio</div>
+          <p>FP mede "quanto da energia total entregue é realmente útil". Como a energia útil nunca pode ser maior que a total, o FP é sempre ≤ 1.</p>
+        </div>
+        <div class="macete-row erro">
+          <div class="macete-tag">Erro comum</div>
+          <p>Inverter a fração (fazer S/P) — isso daria um valor maior que 1, o que é impossível para FP.</p>
+        </div>
+      </div>
+
+      <div class="macete-card">
+        <h3 style="color:var(--accent2); margin-bottom:6px">📐 Potência Reativa (Pitágoras)</h3>
+        <div class="macete-formula">Q = √(S² − P²)</div>
+        <div class="macete-row decorar">
+          <div class="macete-tag">Decorar</div>
+          <p>É só Pitágoras: "o cateto que falta é a raiz da diferença dos quadrados". S é a hipotenusa (sempre o maior lado).</p>
+        </div>
+        <div class="macete-row raciocinio">
+          <div class="macete-tag">Raciocínio</div>
+          <p>Como P, Q e S formam um triângulo retângulo, sempre que souber dois lados, acha o terceiro com Pitágoras. S é sempre o maior valor (hipotenusa).</p>
+        </div>
+        <div class="macete-row erro">
+          <div class="macete-tag">Erro comum</div>
+          <p>Somar P² + S² em vez de subtrair, ou esquecer de tirar a raiz quadrada no final.</p>
+        </div>
+      </div>
+
+      <div class="macete-card">
+        <h3 style="color:var(--green); margin-bottom:6px">🔢 Conversão CV → Watts</h3>
+        <div class="macete-formula">P(W) = CV × 736</div>
+        <div class="macete-row decorar">
+          <div class="macete-tag">Decorar</div>
+          <p>"Setecentos e trinta e seis" — repita em voz alta 3 vezes antes da prova. É só esse número!</p>
+        </div>
+        <div class="macete-row raciocinio">
+          <div class="macete-tag">Raciocínio</div>
+          <p>1 CV é a potência aproximada que um cavalo de força consegue gerar continuamente. Os engenheiros do século XIX padronizaram esse valor como 736 Watts.</p>
+        </div>
+        <div class="macete-row erro">
+          <div class="macete-tag">Erro comum</div>
+          <p>Confundir CV (cavalo-vapor, padrão métrico) com HP (horsepower, padrão imperial, que vale 746W — ligeiramente diferente!).</p>
+        </div>
+      </div>
+
+      <div class="macete-card">
+        <h3 style="color:var(--red); margin-bottom:6px">🌀 Velocidade Síncrona do Motor</h3>
+        <div class="macete-formula">n = (120 × f) / p</div>
+        <div class="macete-row decorar">
+          <div class="macete-tag">Decorar</div>
+          <p>"120 vezes frequência, dividido por polos" — o 120 vem de 60 segundos × 2 (cada ciclo tem 2 alternâncias).</p>
+        </div>
+        <div class="macete-row raciocinio">
+          <div class="macete-tag">Raciocínio</div>
+          <p>Mais polos = motor "mais pesado" para girar magneticamente = velocidade mais baixa. Mais frequência (Hz) = campo girando mais rápido = motor mais rápido.</p>
+        </div>
+        <div class="macete-row erro">
+          <div class="macete-tag">Erro comum</div>
+          <p>Usar o número de polos errado — um motor "de 4 polos" tem p=4, não p=2 (mesmo tendo 2 pares de polos).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXERCICIOS -->
+    <div class="page" id="page-exercicios">
+      <h2 class="section-title">Exercícios Práticos</h2>
+      <p class="desc">45 exercícios organizados por dificuldade. Tente resolver antes de ver o gabarito!</p>
+
+      <h3 class="sub-title">🟢 Básicos (1–20)</h3>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 1</div>
+        <div class="ex-text">Um motor monofásico de 2.200W é alimentado por 220V com FP = 0,85 e rendimento de 90%. Qual é a corrente nominal?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          I = P / (V × FP × η) = 2.200 / (220 × 0,85 × 0,90) = 2.200 / 168,3<br>
+          <span class="answer">I ≈ 13,07 A</span><br>
+          <em>Use disjuntor de 16A.</em>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 2</div>
+        <div class="ex-text">Qual é a potência aparente de uma instalação com tensão 220V e corrente de 15A?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          S = V × I = 220 × 15 = <span class="answer">3.300 VA = 3,3 kVA</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 3</div>
+        <div class="ex-text">Converta 7,5 CV para Watts e para kW.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 7,5 × 736 = <span class="answer">5.520 W = 5,52 kW</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 4</div>
+        <div class="ex-text">Uma carga tem potência ativa de 8 kW e potência aparente de 10 kVA. Qual é o fator de potência?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          FP = P / S = 8.000 / 10.000 = <span class="answer">FP = 0,80</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 5</div>
+        <div class="ex-text">Um motor trifásico de 3 CV opera a 220V com FP = 0,85 e η = 0,88. Calcule a corrente nominal.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 3 × 736 = 2.208 W<br>
+          I = 2.208 / (1,732 × 220 × 0,85 × 0,88) = 2.208 / 284,6<br>
+          <span class="answer">I ≈ 7,76 A</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 6</div>
+        <div class="ex-text">Qual é a potência ativa de um motor com S = 5 kVA e FP = 0,9?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = S × FP = 5.000 × 0,9 = <span class="answer">4.500 W = 4,5 kW</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 7</div>
+        <div class="ex-text">Um chuveiro de 5.400W a 220V tem FP = 1 (resistivo). Qual é a corrente que ele consome?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          I = P / V = 5.400 / 220 = <span class="answer">24,5 A</span><br>
+          <em>Como é resistivo, FP=1 e η=1, simplifica para I = P/V.</em>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 8</div>
+        <div class="ex-text">Qual é a potência reativa de uma instalação com P = 6 kW e S = 10 kVA?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          Q = √(S² - P²) = √(10² - 6²) = √(100 - 36) = √64 = <span class="answer">8 kVAr</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 9</div>
+        <div class="ex-text">Converta 20 CV para kW.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 20 × 736 = 14.720 W = <span class="answer">14,72 kW</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 10</div>
+        <div class="ex-text">Um motor monofásico de 1 CV a 127V, FP = 0,80, η = 0,85. Calcule a corrente.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 1 × 736 = 736 W<br>
+          I = 736 / (127 × 0,80 × 0,85) = 736 / 86,3<br>
+          <span class="answer">I ≈ 8,53 A</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 11</div>
+        <div class="ex-text">Uma instalação industrial tem P = 120 kW e Q = 90 kVAr. Qual é a potência aparente e o fator de potência?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          S = √(P² + Q²) = √(120² + 90²) = √(14.400 + 8.100) = √22.500 = 150 kVA<br>
+          FP = P/S = 120/150 = <span class="answer">S = 150 kVA · FP = 0,80</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 12</div>
+        <div class="ex-text">O que representa o ângulo φ em um circuito elétrico com carga indutiva?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <span class="answer">É o ângulo de defasagem entre a tensão e a corrente elétrica.</span><br>
+          Quanto maior o φ, menor o FP (cos φ menor) e maior a potência reativa circulando.
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 13</div>
+        <div class="ex-text">Um motor de 10 CV trifásico a 380V, FP = 0,87, η = 0,92. Calcule a corrente nominal.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 10 × 736 = 7.360 W<br>
+          I = 7.360 / (1,732 × 380 × 0,87 × 0,92) = 7.360 / 527,8<br>
+          <span class="answer">I ≈ 13,94 A</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 14</div>
+        <div class="ex-text">Qual é o fator de potência de um chuveiro elétrico? Explique.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <span class="answer">FP = 1,0</span><br>
+          O chuveiro é uma carga puramente resistiva. Não possui bobinas nem capacitores, portanto não há defasagem entre tensão e corrente. Toda a energia entregue vira calor (trabalho útil).
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 15</div>
+        <div class="ex-text">Qual é a potência aparente de um motor que consome 12A em uma rede trifásica de 380V?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          S = √3 × V × I = 1,732 × 380 × 12 = <span class="answer">7.897,9 VA ≈ 7,9 kVA</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 16</div>
+        <div class="ex-text">Quais são as três potências do triângulo de potências? Cite nome, símbolo e unidade de cada uma.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <span class="answer">P – Potência Ativa [W ou kW]<br>Q – Potência Reativa [VAr ou kVAr]<br>S – Potência Aparente [VA ou kVA]</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 17</div>
+        <div class="ex-text">Um motor de 15 CV trifásico 380V, FP = 0,84, η = 0,91. Calcule a corrente.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 15 × 736 = 11.040 W<br>
+          I = 11.040 / (1,732 × 380 × 0,84 × 0,91) = 11.040 / 506,7<br>
+          <span class="answer">I ≈ 21,8 A</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 18</div>
+        <div class="ex-text">A ANEEL exige FP mínimo de quanto para consumidores industriais? O que acontece abaixo disso?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <span class="answer">FP mínimo = 0,92</span><br>
+          Abaixo de 0,92, a distribuidora aplica multa (penalidade tarifária) na conta de energia elétrica.
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 19</div>
+        <div class="ex-text">Um motor tem P = 3,5 kW e consome S = 4,375 kVA. Calcule o FP e a potência reativa.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          FP = P/S = 3.500/4.375 = 0,80<br>
+          Q = √(S²-P²) = √(4.375²-3.500²) = √(19.140.625-12.250.000) = √6.890.625<br>
+          <span class="answer">FP = 0,80 · Q = 2.625 VAr = 2,625 kVAr</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-basico">Básico · Ex. 20</div>
+        <div class="ex-text">Por que o √3 aparece na fórmula de corrente trifásica?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <span class="answer">Porque as 3 fases estão defasadas 120° entre si.</span><br>
+          A soma vetorial das 3 fases resulta em um fator multiplicativo de √3 ≈ 1,732 em relação à tensão de linha, em comparação com o sistema monofásico.
+        </div>
+      </div>
+
+      <h3 class="sub-title">🟡 Intermediários (21–35)</h3>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 21</div>
+        <div class="ex-text">Uma indústria possui carga de 200 kVA com FP = 0,72. A distribuidora exige FP ≥ 0,92. Qual deve ser a potência reativa dos capacitores para corrigir o FP?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = S × FP_atual = 200 × 0,72 = 144 kW<br>
+          S_novo = P / FP_novo = 144 / 0,92 = 156,5 kVA<br>
+          Q_atual = √(200²-144²) = √(40.000-20.736) = √19.264 = 138,8 kVAr<br>
+          Q_novo = √(156,5²-144²) = √(24.492-20.736) = √3.756 = 61,3 kVAr<br>
+          Q_capacitores = 138,8 - 61,3 = <span class="answer">≈ 77,5 kVAr de capacitores</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 22</div>
+        <div class="ex-text">Um motor trifásico de 25 CV opera a 440V, FP = 0,86, η = 0,93. Calcule a corrente e determine se um disjuntor de 40A é suficiente (considere fator de serviço de 125%).</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 25 × 736 = 18.400 W<br>
+          I = 18.400 / (1,732 × 440 × 0,86 × 0,93) = 18.400 / 610,1 = 30,2 A<br>
+          I_disjuntor = 30,2 × 1,25 = 37,7 A<br>
+          <span class="answer">I ≈ 30,2 A · Disjuntor de 40A é suficiente (37,7 A < 40 A) ✓</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 23</div>
+        <div class="ex-text">Uma fábrica possui 8 motores de 5 CV cada, todos trifásicos a 380V, FP = 0,85, η = 0,90, operando simultaneamente. Qual é a corrente total no ramal principal?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P_total = 8 × 5 × 736 = 29.440 W<br>
+          I = 29.440 / (1,732 × 380 × 0,85 × 0,90) = 29.440 / 504,8<br>
+          <span class="answer">I ≈ 58,3 A</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 24</div>
+        <div class="ex-text">Um motor trifásico de 380V consome 18A com FP = 0,82. Calcule P, S e Q.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          S = √3 × V × I = 1,732 × 380 × 18 = 11.846,9 VA ≈ 11,85 kVA<br>
+          P = S × FP = 11.847 × 0,82 = 9.714 W ≈ 9,71 kW<br>
+          Q = √(11.847²-9.714²) = √(140.351.609-94.361.796) = √45.989.813<br>
+          <span class="answer">S ≈ 11,85 kVA · P ≈ 9,71 kW · Q ≈ 6,78 kVAr</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 25</div>
+        <div class="ex-text">Dois motores estão em paralelo: Motor A (P=5 kW, Q=3,75 kVAr) e Motor B (P=8 kW, Q=6,0 kVAr). Calcule a potência total, S total e FP total da instalação.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P_total = 5 + 8 = 13 kW<br>
+          Q_total = 3,75 + 6 = 9,75 kVAr<br>
+          S_total = √(13²+9,75²) = √(169+95,06) = √264,06 = 16,25 kVA<br>
+          FP = P/S = 13/16,25 = <span class="answer">P=13kW · S≈16,25kVA · FP≈0,80</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 26</div>
+        <div class="ex-text">Um motor de 7,5 CV a 220V monofásico, FP = 0,83, η = 0,89. Determine: (a) corrente nominal; (b) potência aparente consumida da rede.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 7,5 × 736 = 5.520 W<br>
+          (a) I = 5.520 / (220 × 0,83 × 0,89) = 5.520 / 162,5 = <span class="answer">33,97 A</span><br>
+          (b) S = V × I = 220 × 33,97 = <span class="answer">7.473 VA ≈ 7,47 kVA</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 27</div>
+        <div class="ex-text">Sabendo que cos(φ) = 0,8, determine: (a) sen(φ); (b) tan(φ); (c) o ângulo φ em graus.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          (a) sen(φ) = √(1-0,8²) = √(1-0,64) = √0,36 = <span class="answer">0,60</span><br>
+          (b) tan(φ) = sen/cos = 0,6/0,8 = <span class="answer">0,75</span><br>
+          (c) φ = arccos(0,8) = <span class="answer">36,87°</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 28</div>
+        <div class="ex-text">Motor trifásico: plaquinha indica 15 CV, 380V, cos φ = 0,87, η = 90%. Calcule a corrente e a potência consumida da rede (potência elétrica de entrada).</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P_mec = 15 × 736 = 11.040 W<br>
+          P_elétrica = P_mec / η = 11.040 / 0,90 = 12.267 W<br>
+          I = 12.267 / (1,732 × 380 × 0,87) = 12.267 / 571,9<br>
+          <span class="answer">P_entrada ≈ 12,27 kW · I ≈ 21,45 A</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 29</div>
+        <div class="ex-text">Uma instalação tem S = 80 kVA e FP = 0,65. Qual seria a corrente a 380V trifásico? Qual seria a corrente se o FP fosse corrigido para 0,95 (mantendo a mesma potência ativa)?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 80 × 0,65 = 52 kW<br>
+          I1 = 80.000 / (1,732 × 380) = 80.000 / 658,2 = 121,5 A<br>
+          S_novo = 52.000 / 0,95 = 54.737 VA<br>
+          I2 = 54.737 / (1,732 × 380) = 54.737 / 658,2 = 83,2 A<br>
+          <span class="answer">I antes = 121,5 A · I depois = 83,2 A</span><br>
+          <em>A corrente caiu 31,5%! Menos perdas nos cabos.</em>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 30</div>
+        <div class="ex-text">Explique a diferença entre partida direta e partida estrela-triângulo de motores trifásicos. Por que a segunda é usada em motores grandes?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <span class="answer">Partida direta:</span> motor liga a tensão plena imediatamente. Corrente de partida = 5 a 7x a corrente nominal. Causa queda de tensão e stress mecânico.<br><br>
+          <span class="answer">Partida estrela-triângulo:</span> motor parte em estrela (tensão reduzida a 1/√3) e depois comuta para triângulo (tensão plena). Reduz a corrente de partida para ~1/3 da partida direta.<br><br>
+          Usada em motores acima de 5-7,5 CV para proteger a rede e o motor.
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 31</div>
+        <div class="ex-text">Um transformador de 50 kVA alimenta motores com FP = 0,72. Quantos kW de potência ativa ele consegue fornecer? Se o FP fosse corrigido para 0,93, quantos kW ele entregaria?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          Com FP=0,72: P = 50 × 0,72 = <span class="answer">36 kW</span><br>
+          Com FP=0,93: P = 50 × 0,93 = <span class="answer">46,5 kW</span><br>
+          <em>Correção do FP permitiu 10,5 kW extras sem trocar o transformador!</em>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 32</div>
+        <div class="ex-text">Motor trifásico: 30 CV, 380V, FP = 0,85, η = 0,92. Calcule: (a) corrente; (b) potência ativa; (c) potência aparente; (d) potência reativa.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P_mec = 30 × 736 = 22.080 W<br>
+          (a) I = 22.080 / (1,732 × 380 × 0,85 × 0,92) = 22.080 / 514,1 = <span class="answer">42,95 A</span><br>
+          (b) P_elétrica = 22.080 / 0,92 = <span class="answer">24.000 W = 24 kW</span><br>
+          (c) S = P/FP = 24.000/0,85 = <span class="answer">28.235 VA ≈ 28,2 kVA</span><br>
+          (d) Q = √(28.235²-24.000²) = √(797.215.225-576.000.000) = √221.215.225 = <span class="answer">≈ 14.874 VAr ≈ 14,9 kVAr</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 33</div>
+        <div class="ex-text">O que é um inversor de frequência? Como ele muda a velocidade de um motor de indução?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <span class="answer">É um dispositivo eletrônico que converte a frequência da rede (60 Hz) em uma frequência variável.</span><br><br>
+          A velocidade de um motor de indução é proporcional à frequência de alimentação: n = (120 × f) / p, onde p é o número de polos. Diminuindo f, diminui n. Aumentando f, aumenta n. Isso permite controle preciso da velocidade sem perdas mecânicas.
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 34</div>
+        <div class="ex-text">Calcule a corrente de um motor monofásico de 2 CV a 127V com FP = 0,78 e η = 0,87.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 2 × 736 = 1.472 W<br>
+          I = 1.472 / (127 × 0,78 × 0,87) = 1.472 / 86,1<br>
+          <span class="answer">I ≈ 17,1 A</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-inter">Intermediário · Ex. 35</div>
+        <div class="ex-text">Uma bomba d'água trifásica de 5 CV (380V, FP=0,86, η=0,90) funciona 8h/dia durante 22 dias úteis no mês. Qual é o consumo mensal em kWh?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P_elétrica = (5 × 736) / (0,86 × 0,90) = 3.680 / 0,774 = 4.754 W = 4,754 kW<br>
+          Energia = P × t = 4,754 × (8 × 22) = 4,754 × 176<br>
+          <span class="answer">≈ 836,7 kWh/mês</span>
+        </div>
+      </div>
+
+      <h3 class="sub-title">🔴 Avançados (36–45)</h3>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 36</div>
+        <div class="ex-text">Um sistema possui 3 cargas trifásicas a 380V: Carga 1: 20 kW, FP=0,75 indutivo. Carga 2: 15 kW, FP=0,85 indutivo. Carga 3: 10 kW, FP=1,0 (resistivo). Calcule P total, Q total, S total e FP total.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          Carga 1: S1=20/0,75=26,67kVA · Q1=√(26,67²-20²)=17,64kVAr<br>
+          Carga 2: S2=15/0,85=17,65kVA · Q2=√(17,65²-15²)=9,30kVAr<br>
+          Carga 3: S3=10/1,0=10kVA · Q3=0<br>
+          P_total = 20+15+10 = 45 kW<br>
+          Q_total = 17,64+9,30+0 = 26,94 kVAr<br>
+          S_total = √(45²+26,94²) = √(2025+725,8) = √2750,8 = 52,45 kVA<br>
+          <span class="answer">P=45kW · Q=26,94kVAr · S≈52,45kVA · FP=45/52,45≈0,858</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 37</div>
+        <div class="ex-text">Um motor de 50 CV trifásico (440V, FP=0,88, η=0,93) está ligado a um inversor de frequência. Com o inversor reduzindo a frequência para 30 Hz (metade de 60 Hz), estima-se que a velocidade e o torque caem, resultando em P_mecânica = 60% do nominal. Calcule a corrente nessa condição (assuma que FP e η permanecem iguais).</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P_nominal = 50 × 736 = 36.800 W<br>
+          P_reduzida = 36.800 × 0,60 = 22.080 W<br>
+          I = 22.080 / (1,732 × 440 × 0,88 × 0,93) = 22.080 / 622,5<br>
+          <span class="answer">I ≈ 35,5 A (vs 59,1 A em plena carga)</span><br>
+          <em>O inversor reduziu o consumo de energia significativamente!</em>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 38</div>
+        <div class="ex-text">Uma subestação industrial tem transformador de 500 kVA. O conjunto de cargas apresenta FP = 0,70. (a) Qual a potência ativa disponível? (b) Se instalar banco de capacitores de 150 kVAr, qual será o novo FP? (c) Qual será a nova potência ativa disponível?</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          (a) P = 500 × 0,70 = <span class="answer">350 kW</span><br>
+          Q_atual = √(500²-350²) = √(250.000-122.500) = √127.500 = 357,1 kVAr<br>
+          Q_nova = 357,1 - 150 = 207,1 kVAr<br>
+          S_nova = √(350²+207,1²) = √(122.500+42.890) = √165.390 = 406,7 kVA<br>
+          (b) FP_novo = 350/406,7 = <span class="answer">0,861</span><br>
+          (c) P_disponível com FP_novo no mesmo trafo: 500×0,861 = <span class="answer">430,5 kW</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 39</div>
+        <div class="ex-text">Um motor de indução trifásico de 4 polos é alimentado por um inversor de frequência. Calcule a velocidade síncrona quando o inversor opera a (a) 60 Hz; (b) 45 Hz; (c) 30 Hz. Fórmula: n_s = (120 × f) / p.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          (a) n_s = (120 × 60) / 4 = <span class="answer">1.800 rpm</span><br>
+          (b) n_s = (120 × 45) / 4 = <span class="answer">1.350 rpm</span><br>
+          (c) n_s = (120 × 30) / 4 = <span class="answer">900 rpm</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 40</div>
+        <div class="ex-text">Uma linha de distribuição interna tem resistência total de 0,2 Ω por fase. Um motor trifásico 380V consome 30A. Calcule: (a) a queda de tensão na linha; (b) a tensão nos terminais do motor; (c) a potência dissipada na linha.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          (a) ΔV = I × R = 30 × 0,2 = <span class="answer">6 V por fase</span><br>
+          (b) V_motor = 380 - (√3 × 6) ≈ 380 - 10,4 = <span class="answer">≈ 369,6 V</span><br>
+          (c) P_linha = 3 × I² × R = 3 × 30² × 0,2 = 3 × 900 × 0,2 = <span class="answer">540 W</span>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 41</div>
+        <div class="ex-text">Dimensione o disjuntor para um motor trifásico de 20 CV (380V, FP=0,85, η=0,92). Use o critério NBR: disjuntor = 125% × I_nominal, escolha o valor comercial imediatamente acima (valores: 40, 50, 63, 80, 100 A).</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P = 20 × 736 = 14.720 W<br>
+          I = 14.720 / (1,732 × 380 × 0,85 × 0,92) = 14.720 / 514,1 = 28,63 A<br>
+          I_disjuntor = 28,63 × 1,25 = 35,8 A<br>
+          <span class="answer">Disjuntor comercial: 40 A</span><br>
+          <em>Escolhe o imediatamente acima de 35,8 A na escala comercial.</em>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 42</div>
+        <div class="ex-text">Explique detalhadamente como um soft-starter funciona e em que situações ele é preferível ao inversor de frequência.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <span class="answer">Soft-starter:</span> controla o ângulo de disparos de tiristores (SCRs) para aumentar gradualmente a tensão aplicada ao motor na partida. Reduz a corrente de partida de 5-7x para 2-4x a nominal. Após o motor atingir a velocidade nominal, bypass interno assume e o soft-starter é "transparente".<br><br>
+          <span class="answer">Preferível ao inversor quando:</span> só precisa suavizar a partida (não controlar velocidade durante operação), custo é um fator (soft-starter é mais barato), e o motor operará sempre na velocidade nominal.
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 43</div>
+        <div class="ex-text">Uma indústria tem conta de energia de R$ 0,75/kWh. O banco de capacitores custa R$ 15.000 e reduz a corrente de 120A para 85A (380V trifásico, 16h/dia, 22 dias/mês). Qual o payback do investimento considerando apenas a redução da potência reativa e a melhoria do FP? (Estime a redução de kVA e o benefício tarifário de R$ 8/kVAr/mês).</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          S_antes = √3×380×120 = 79.020 VA ≈ 79 kVA<br>
+          S_depois = √3×380×85 = 55.971 VA ≈ 56 kVA<br>
+          Redução de Q: assumindo mesma P, Q cai de √(79²-P²) para √(56²-P²)<br>
+          Estimativa simplificada: ΔkVAr ≈ 30 kVAr<br>
+          Economia/mês = 30 × R$8 = R$240/mês<br>
+          Payback = 15.000 / 240 ≈ <span class="answer">62,5 meses ≈ 5 anos</span><br>
+          <em>Na prática, inclui também redução de perdas nos cabos e evitar multas ANEEL.</em>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 44</div>
+        <div class="ex-text">Um compressor de ar industrial trifásico de 75 CV (440V, FP=0,89, η=0,94) opera com carga variável. Em regime de carga parcial (50% da potência mecânica), o FP cai para 0,72. Calcule e compare as correntes nas duas condições.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          P_nominal = 75 × 736 = 55.200 W<br>
+          I_plena = 55.200 / (1,732×440×0,89×0,94) = 55.200/634,7 = 86,97 A<br>
+          P_parcial = 55.200 × 0,50 = 27.600 W<br>
+          I_parcial = 27.600 / (1,732×440×0,72×0,94) = 27.600/514,2 = 53,7 A<br>
+          <span class="answer">Plena carga: 87 A · Meia carga: 53,7 A</span><br>
+          <em>Note que na meia carga o FP piorou (0,89→0,72), típico de motores subdimensionados.</em>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="diff-badge diff-avancado">Avançado · Ex. 45</div>
+        <div class="ex-text">(Questão Integrada) Uma linha de produção possui: (A) Compressor 30 CV trifásico 380V, FP=0,86, η=0,92; (B) Esteira 10 CV trifásico 380V, FP=0,84, η=0,90; (C) Iluminação fluorescente 5 kW, FP=0,95 resistivo-indutivo; (D) Banco de capacitores de 20 kVAr para correção. Calcule: corrente de cada carga, P total, Q total líquido (descontando capacitores), S total e FP resultante.</div>
+        <button class="btn-gabarito" onclick="toggleGab(this)">Ver Gabarito</button>
+        <div class="gabarito-content">
+          <strong>A - Compressor:</strong> P=22.080W; I=22.080/(1,732×380×0,86×0,92)=22.080/509=43,4A; S=22.080/0,86=25.674VA; Q=√(25.674²-22.080²)=13.498VAr<br>
+          <strong>B - Esteira:</strong> P=7.360W; I=7.360/(1,732×380×0,84×0,90)=7.360/497,5=14,8A; S=7.360/0,84=8.762VA; Q=√(8.762²-7.360²)=4.607VAr<br>
+          <strong>C - Iluminação:</strong> P=5.000W; S=5.000/0,95=5.263VA; Q=√(5.263²-5.000²)=1.662VAr<br>
+          <strong>Totais sem capacitores:</strong> P=34.440W; Q=13.498+4.607+1.662=19.767VAr<br>
+          <strong>Com banco de 20kVAr:</strong> Q_liq=19.767-20.000≈0 kVAr (levemente capacitivo)<br>
+          S_total≈P=34.440 VA; FP≈P/S≈<span class="answer">FP ≈ 1,0 (quase unitário!)</span><br>
+          <em>O banco de capacitores dimensionado corretamente praticamente anulou a potência reativa!</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIMULADOR -->
+    <div class="page" id="page-simulador">
+      <h2 class="section-title">Simulador Interativo</h2>
+      <p class="desc">Calcule instantaneamente os valores que precisar. Insira os dados e clique em calcular.</p>
+
+      <!-- CALC 1: FP -->
+      <div class="calc-section">
+        <h3 class="sub-title" style="margin-top:0">⚡ Calculadora de Fator de Potência</h3>
+        <div class="calc-grid">
+          <div class="calc-field">
+            <label>Potência Ativa P (W)</label>
+            <input type="number" id="fp-p" placeholder="Ex: 1760">
+          </div>
+          <div class="calc-field">
+            <label>Tensão V (V)</label>
+            <input type="number" id="fp-v" placeholder="Ex: 220">
+          </div>
+          <div class="calc-field">
+            <label>Corrente I (A)</label>
+            <input type="number" id="fp-i" placeholder="Ex: 10">
+          </div>
+          <div class="calc-field">
+            <label>&nbsp;</label>
+            <button class="btn-calc" onclick="calcFP()">Calcular</button>
+          </div>
+        </div>
+        <div class="calc-result" id="result-fp">
+          <strong style="font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px">Resultados</strong>
+          <div class="result-grid">
+            <div class="result-item"><div class="val" id="r-fp-s">—</div><div class="lbl">S (kVA)</div></div>
+            <div class="result-item"><div class="val" id="r-fp-fp">—</div><div class="lbl">Fator de Potência</div></div>
+            <div class="result-item"><div class="val" id="r-fp-q">—</div><div class="lbl">Q (kVAr)</div></div>
+            <div class="result-item"><div class="val" id="r-fp-phi">—</div><div class="lbl">Ângulo φ (°)</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALC 2: Motor Monofásico -->
+      <div class="calc-section">
+        <h3 class="sub-title" style="margin-top:0">🔌 Corrente de Motor Monofásico</h3>
+        <div class="calc-grid">
+          <div class="calc-field">
+            <label>Potência</label>
+            <input type="number" id="mono-p" placeholder="Ex: 5">
+          </div>
+          <div class="calc-field">
+            <label>Unidade</label>
+            <select id="mono-unit">
+              <option value="cv">CV (cavalo-vapor)</option>
+              <option value="w">Watts (W)</option>
+              <option value="kw">Kilowatts (kW)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>Tensão V (V)</label>
+            <input type="number" id="mono-v" placeholder="Ex: 220">
+          </div>
+          <div class="calc-field">
+            <label>Fator de Potência</label>
+            <input type="number" id="mono-fp" placeholder="Ex: 0.85" step="0.01" min="0" max="1">
+          </div>
+          <div class="calc-field">
+            <label>Rendimento η</label>
+            <input type="number" id="mono-eta" placeholder="Ex: 0.90" step="0.01" min="0" max="1">
+          </div>
+          <div class="calc-field">
+            <label>&nbsp;</label>
+            <button class="btn-calc" onclick="calcMono()">Calcular</button>
+          </div>
+        </div>
+        <div class="calc-result" id="result-mono">
+          <strong style="font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px">Resultados</strong>
+          <div class="result-grid">
+            <div class="result-item"><div class="val" id="r-mono-pw">—</div><div class="lbl">P (kW)</div></div>
+            <div class="result-item"><div class="val" id="r-mono-i">—</div><div class="lbl">Corrente (A)</div></div>
+            <div class="result-item"><div class="val" id="r-mono-disj">—</div><div class="lbl">Disjuntor (A)</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALC 3: Motor Trifásico -->
+      <div class="calc-section">
+        <h3 class="sub-title" style="margin-top:0">⚡ Corrente de Motor Trifásico</h3>
+        <div class="calc-grid">
+          <div class="calc-field">
+            <label>Potência</label>
+            <input type="number" id="tri-p" placeholder="Ex: 10">
+          </div>
+          <div class="calc-field">
+            <label>Unidade</label>
+            <select id="tri-unit">
+              <option value="cv">CV (cavalo-vapor)</option>
+              <option value="w">Watts (W)</option>
+              <option value="kw">Kilowatts (kW)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>Tensão de Linha V (V)</label>
+            <input type="number" id="tri-v" placeholder="Ex: 380">
+          </div>
+          <div class="calc-field">
+            <label>Fator de Potência</label>
+            <input type="number" id="tri-fp" placeholder="Ex: 0.85" step="0.01" min="0" max="1">
+          </div>
+          <div class="calc-field">
+            <label>Rendimento η</label>
+            <input type="number" id="tri-eta" placeholder="Ex: 0.90" step="0.01" min="0" max="1">
+          </div>
+          <div class="calc-field">
+            <label>&nbsp;</label>
+            <button class="btn-calc" onclick="calcTri()">Calcular</button>
+          </div>
+        </div>
+        <div class="calc-result" id="result-tri">
+          <strong style="font-size:13px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px">Resultados</strong>
+          <div class="result-grid">
+            <div class="result-item"><div class="val" id="r-tri-pw">—</div><div class="lbl">P (kW)</div></div>
+            <div class="result-item"><div class="val" id="r-tri-i">—</div><div class="lbl">Corrente (A)</div></div>
+            <div class="result-item"><div class="val" id="r-tri-s">—</div><div class="lbl">S (kVA)</div></div>
+            <div class="result-item"><div class="val" id="r-tri-disj">—</div><div class="lbl">Disjuntor (A)</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPA MENTAL -->
+    <div class="page" id="page-mapa-mental">
+      <h2 class="section-title">Mapa Mental</h2>
+      <p class="desc">Visualize como todos os conceitos se conectam.</p>
+
+      <div class="svg-container">
+        <svg viewBox="0 0 760 520" width="100%" id="mapa-mental-svg">
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- Lines -->
+          <line x1="380" y1="260" x2="380" y2="100" stroke="#2a3045" stroke-width="1.5"/>
+          <line x1="380" y1="260" x2="160" y2="160" stroke="#2a3045" stroke-width="1.5"/>
+          <line x1="380" y1="260" x2="600" y2="160" stroke="#2a3045" stroke-width="1.5"/>
+          <line x1="380" y1="260" x2="160" y2="360" stroke="#2a3045" stroke-width="1.5"/>
+          <line x1="380" y1="260" x2="600" y2="360" stroke="#2a3045" stroke-width="1.5"/>
+          <line x1="380" y1="260" x2="240" y2="460" stroke="#2a3045" stroke-width="1.5"/>
+          <line x1="380" y1="260" x2="520" y2="460" stroke="#2a3045" stroke-width="1.5"/>
+
+          <!-- Sub lines -->
+          <line x1="160" y1="160" x2="60" y2="80" stroke="#1e2433" stroke-width="1"/>
+          <line x1="160" y1="160" x2="60" y2="200" stroke="#1e2433" stroke-width="1"/>
+          <line x1="600" y1="160" x2="700" y2="80" stroke="#1e2433" stroke-width="1"/>
+          <line x1="600" y1="160" x2="700" y2="200" stroke="#1e2433" stroke-width="1"/>
+          <line x1="600" y1="360" x2="700" y2="310" stroke="#1e2433" stroke-width="1"/>
+          <line x1="600" y1="360" x2="700" y2="420" stroke="#1e2433" stroke-width="1"/>
+
+          <!-- Center Node -->
+          <circle cx="380" cy="260" r="52" fill="rgba(0,212,255,.15)" stroke="#00d4ff" stroke-width="2" filter="url(#glow)"/>
+          <text x="380" y="254" fill="#00d4ff" font-size="13" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">ACIONAMENTOS</text>
+          <text x="380" y="271" fill="#00d4ff" font-size="11" font-family="Inter" text-anchor="middle">Eletroeletrônicos</text>
+
+          <!-- POTÊNCIA Node -->
+          <circle cx="380" cy="88" r="36" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="380" y="84" fill="#f59e0b" font-size="11" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">POTÊNCIA</text>
+          <text x="380" y="97" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">P, Q, S</text>
+
+          <!-- FATOR DE POTÊNCIA Node -->
+          <circle cx="160" cy="148" r="36" fill="rgba(124,58,237,.12)" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="160" y="144" fill="#7c3aed" font-size="10" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">FATOR DE</text>
+          <text x="160" y="157" fill="#7c3aed" font-size="10" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">POTÊNCIA</text>
+
+          <!-- CORRENTE Node -->
+          <circle cx="600" cy="148" r="36" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5"/>
+          <text x="600" y="144" fill="#10b981" font-size="11" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">CORRENTE</text>
+          <text x="600" y="157" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">Mono / Tri</text>
+
+          <!-- MOTORES Node -->
+          <circle cx="160" cy="372" r="36" fill="rgba(239,68,68,.12)" stroke="#ef4444" stroke-width="1.5"/>
+          <text x="160" y="369" fill="#ef4444" font-size="11" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">MOTORES</text>
+          <text x="160" y="381" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">CV, η, FP</text>
+
+          <!-- INVERSORES Node -->
+          <circle cx="600" cy="372" r="36" fill="rgba(0,212,255,.10)" stroke="#00d4ff" stroke-width="1.5"/>
+          <text x="600" y="369" fill="#00d4ff" font-size="11" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">INVERSORES</text>
+          <text x="600" y="381" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">Freq. variável</text>
+
+          <!-- TENSÃO Node -->
+          <circle cx="240" cy="460" r="34" fill="rgba(245,158,11,.10)" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="240" y="457" fill="#f59e0b" font-size="11" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">TENSÃO</text>
+          <text x="240" y="469" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">220V / 380V</text>
+
+          <!-- AUTOMAÇÃO Node -->
+          <circle cx="520" cy="460" r="34" fill="rgba(124,58,237,.12)" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="520" y="457" fill="#7c3aed" font-size="11" font-family="JetBrains Mono" font-weight="700" text-anchor="middle">AUTOMAÇÃO</text>
+          <text x="520" y="469" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">CLP, sensores</text>
+
+          <!-- Sub nodes FP -->
+          <rect x="5" y="60" width="72" height="22" rx="4" fill="#1e2433" stroke="#2a3045"/>
+          <text x="41" y="75" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">cos(φ) = P/S</text>
+
+          <rect x="5" y="186" width="72" height="22" rx="4" fill="#1e2433" stroke="#2a3045"/>
+          <text x="41" y="201" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">Capacitores</text>
+
+          <!-- Sub nodes Corrente -->
+          <rect x="662" y="60" width="78" height="22" rx="4" fill="#1e2433" stroke="#2a3045"/>
+          <text x="701" y="75" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">I = P/(V·FP·η)</text>
+
+          <rect x="662" y="188" width="78" height="22" rx="4" fill="#1e2433" stroke="#2a3045"/>
+          <text x="701" y="203" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">√3 trifásico</text>
+
+          <!-- Sub nodes Inversores -->
+          <rect x="662" y="295" width="78" height="22" rx="4" fill="#1e2433" stroke="#2a3045"/>
+          <text x="701" y="310" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">Velocidade</text>
+
+          <rect x="662" y="407" width="78" height="22" rx="4" fill="#1e2433" stroke="#2a3045"/>
+          <text x="701" y="422" fill="#8892a4" font-size="9" font-family="Inter" text-anchor="middle">Economia</text>
+        </svg>
+      </div>
+
+      <h3 class="sub-title">Como os conceitos se conectam</h3>
+      <div class="card">
+        <p class="desc" style="margin:0">Todo acionamento industrial gira em torno de 3 eixos centrais: <strong style="color:var(--accent3)">Potência</strong> (quanto de energia o sistema precisa), <strong style="color:var(--accent2)">Fator de Potência</strong> (quão eficientemente essa energia é usada) e <strong style="color:var(--green)">Corrente</strong> (quanta corrente circula nos cabos). Esses três determinam o dimensionamento do motor, do inversor de frequência, dos cabos e dos disjuntores — que juntos formam um sistema de automação industrial completo.</p>
+      </div>
+    </div>
+
+    <!-- GERADOR DE EXERCICIOS -->
+    <div class="page" id="page-gerador">
+      <h2 class="section-title">Gerador Inteligente de Exercícios</h2>
+      <p class="desc">Milhares de combinações geradas com números aleatórios. Escolha o tema e a dificuldade, resolva, e só veja a resposta depois de verificar.</p>
+
+      <div class="gen-header">
+        <div class="gen-mode-tabs" id="gen-topic-tabs">
+          <div class="gen-mode-tab active" data-topic="fp" onclick="setGenTopic('fp')">Fator de Potência</div>
+          <div class="gen-mode-tab" data-topic="mono" onclick="setGenTopic('mono')">Motor Mono</div>
+          <div class="gen-mode-tab" data-topic="tri" onclick="setGenTopic('tri')">Motor Trifásico</div>
+          <div class="gen-mode-tab" data-topic="mat" onclick="setGenTopic('mat')">Matemática</div>
+        </div>
+        <div class="gen-diff-select" id="gen-diff-select">
+          <div class="gen-diff-btn active facil" data-diff="facil" onclick="setGenDiff('facil')">🟢 Fácil</div>
+          <div class="gen-diff-btn medio" data-diff="medio" onclick="setGenDiff('medio')">🟡 Médio</div>
+          <div class="gen-diff-btn dificil" data-diff="dificil" onclick="setGenDiff('dificil')">🔴 Difícil</div>
+        </div>
+      </div>
+
+      <div class="question-card" id="gen-question-card">
+        <div class="question-meta">
+          <div class="question-tag" id="gen-q-tag">Carregando...</div>
+          <div class="question-streak">🔥 Sequência: <span id="gen-streak">0</span></div>
+        </div>
+        <div class="question-text" id="gen-q-text">Clique em "Nova Questão" para começar.</div>
+        <div class="answer-input-area">
+          <input type="text" id="gen-answer-input" placeholder="Sua resposta">
+          <span class="unit-label" id="gen-unit-label"></span>
+          <button class="btn-verify" id="gen-btn-verify" onclick="verifyGenAnswer()">Verificar Resposta</button>
+          <button class="btn-next" id="gen-btn-next" onclick="generateQuestion()">Próxima Questão →</button>
+        </div>
+        <div class="feedback-panel" id="gen-feedback"></div>
+      </div>
+
+      <div style="text-align:center">
+        <button class="btn-calc" style="background:var(--surface2); color:var(--text2); border:1px solid var(--border)" onclick="generateQuestion()">🎲 Gerar Nova Questão</button>
+      </div>
+    </div>
+
+    <!-- SIMULADO -->
+    <div class="page" id="page-simulado">
+      <h2 class="section-title">Simulado — Modo Prova</h2>
+
+      <div id="sim-setup-view" class="sim-setup">
+        <div class="sim-icon">⏱️</div>
+        <h3>Pronto para o desafio?</h3>
+        <p>10 questões aleatórias misturando Fator de Potência, Motores e Matemática Aplicada. Sem ver respostas até o final. Tempo é cronometrado.</p>
+        <button class="btn-start-sim" onclick="startSimulado()">Iniciar Simulado</button>
+      </div>
+
+      <div id="sim-active-view" style="display:none">
+        <div class="sim-timer-bar">
+          <div class="sim-timer" id="sim-timer-display">00:00</div>
+          <div class="sim-progress-text">Questão <span id="sim-current-num">1</span> de 10</div>
+        </div>
+        <div class="question-card">
+          <div class="question-meta">
+            <div class="question-tag" id="sim-q-tag">—</div>
+          </div>
+          <div class="question-text" id="sim-q-text">—</div>
+          <div class="answer-input-area">
+            <input type="text" id="sim-answer-input" placeholder="Sua resposta">
+            <span class="unit-label" id="sim-unit-label"></span>
+            <button class="btn-verify" onclick="simNextQuestion()" id="sim-btn-action">Próxima →</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sim-results-view" style="display:none" class="sim-results">
+        <div class="sim-score-circle" id="sim-score-circle">
+          <div class="pct" id="sim-score-pct">0%</div>
+          <div class="lbl">Acertos</div>
+        </div>
+        <h3 id="sim-results-title">Resultado do Simulado</h3>
+        <p id="sim-results-sub" style="color:var(--text2); margin-bottom:24px"></p>
+        <div id="sim-review-list" style="max-width:560px; margin:0 auto; text-align:left"></div>
+        <button class="btn-start-sim" style="margin-top:20px" onclick="startSimulado()">Refazer Simulado</button>
+      </div>
+    </div>
+
+    <!-- TREINO INFINITO -->
+    <div class="page" id="page-treino-infinito">
+      <h2 class="section-title">Treino Infinito</h2>
+      <p class="desc">As questões nunca acabam. Resolva no seu ritmo — cada acerto te dá XP e mantém sua sequência viva.</p>
+
+      <div class="gen-header">
+        <div class="gen-diff-select" id="ti-diff-select">
+          <div class="gen-diff-btn active facil" data-diff="facil" onclick="setTiDiff('facil')">🟢 Fácil</div>
+          <div class="gen-diff-btn medio" data-diff="medio" onclick="setTiDiff('medio')">🟡 Médio</div>
+          <div class="gen-diff-btn dificil" data-diff="dificil" onclick="setTiDiff('dificil')">🔴 Difícil</div>
+        </div>
+        <div class="question-streak">🔥 Sequência atual: <span id="ti-streak">0</span> &nbsp;|&nbsp; ✅ Resolvidas: <span id="ti-solved">0</span></div>
+      </div>
+
+      <div class="question-card" id="ti-question-card">
+        <div class="question-meta">
+          <div class="question-tag" id="ti-q-tag">Carregando...</div>
+        </div>
+        <div class="question-text" id="ti-q-text">Clique em "Começar Treino" para gerar sua primeira questão.</div>
+        <div class="answer-input-area">
+          <input type="text" id="ti-answer-input" placeholder="Sua resposta">
+          <span class="unit-label" id="ti-unit-label"></span>
+          <button class="btn-verify" id="ti-btn-verify" onclick="verifyTiAnswer()">Verificar Resposta</button>
+          <button class="btn-next" id="ti-btn-next" onclick="generateTiQuestion()">Próxima Questão →</button>
+        </div>
+        <div class="feedback-panel" id="ti-feedback"></div>
+      </div>
+    </div>
+
+    <!-- ESTATISTICAS -->
+    <div class="page" id="page-estatisticas">
+      <h2 class="section-title">Estatísticas e Evolução</h2>
+      <p class="desc">Seu progresso é salvo automaticamente no seu navegador (localStorage).</p>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-value" id="st-total">0</div><div class="stat-label">Questões Resolvidas</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="st-accuracy">0%</div><div class="stat-label">Taxa de Acerto</div></div>
+        <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="st-avgtime">0s</div><div class="stat-label">Tempo Médio</div></div>
+        <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value" id="st-bestreak">0</div><div class="stat-label">Maior Sequência</div></div>
+        <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value" id="st-xp">0</div><div class="stat-label">XP Total</div></div>
+        <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value" id="st-level">1</div><div class="stat-label">Nível Atual</div></div>
+      </div>
+
+      <h3 class="sub-title">📊 Tema com Mais Erros</h3>
+      <div class="card" id="st-topics-card">
+        <div id="st-topics-list">
+          <p class="desc" style="margin:0">Resolva algumas questões para ver suas estatísticas por tema.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-title">🏅 Medalhas</h3>
+      <div class="badge-grid" id="badge-grid">
+        <!-- Filled by JS -->
+      </div>
+
+      <button class="btn-reset-stats" onclick="resetStats()">🗑️ Resetar todas as estatísticas</button>
+    </div>
+
+  </div><!-- end content -->
+</main>
+
+<script>
+// NAVIGATION
+const pages = {};
+document.querySelectorAll('.page').forEach(p => {
+  pages[p.id.replace('page-', '')] = p;
+});
+
+const navItems = document.querySelectorAll('.nav-item');
+
+const breadcrumbs = {
+  'intro': 'Introdução',
+  'fp-conceito': 'Módulo 1 › Conceito',
+  'fp-triangulo': 'Módulo 1 › Triângulo',
+  'fp-formulas': 'Módulo 1 › Fórmulas',
+  'fp-exemplos': 'Módulo 1 › Exemplos',
+  'fp-correcao': 'Módulo 1 › Correção',
+  'motor-conceitos': 'Módulo 2 › Conceitos',
+  'motor-formulas': 'Módulo 2 › Fórmulas',
+  'motor-exemplos': 'Módulo 2 › Exemplos',
+  'motor-tabela': 'Módulo 2 › Tabela CV',
+  'dicas-cotidiano': 'Módulo 3 › Cotidiano',
+  'dicas-provas': 'Módulo 3 › Provas',
+  'mat-divisao': 'Matemática › Divisão',
+  'mat-raiz': 'Matemática › Raiz Quadrada',
+  'mat-fracoes': 'Matemática › Frações',
+  'mat-porcentagem': 'Matemática › Porcentagem',
+  'mat-regra3': 'Matemática › Regra de Três',
+  'mat-macetes': 'Matemática › Macetes',
+  'exercicios': 'Exercícios',
+  'simulador': 'Simulador',
+  'gerador': 'Praticar › Gerador',
+  'simulado': 'Praticar › Simulado',
+  'treino-infinito': 'Praticar › Treino Infinito',
+  'mapa-mental': 'Mapa Mental',
+  'estatisticas': 'Estatísticas'
+};
+
+function showPage(id) {
+  Object.values(pages).forEach(p => p.classList.remove('active'));
+  navItems.forEach(n => n.classList.remove('active'));
+
+  const page = pages[id];
+  if (page) {
+    page.classList.add('active');
+    const bc = document.getElementById('breadcrumb');
+    const parts = (breadcrumbs[id] || id).split(' › ');
+    if (parts.length > 1) {
+      bc.innerHTML = parts[0] + ' › <span>' + parts[1] + '</span>';
+    } else {
+      bc.innerHTML = 'Início › <span>' + parts[0] + '</span>';
+    }
+    window.scrollTo(0, 0);
+  }
+
+  // Highlight nav
+  navItems.forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${id}'`)) {
+      n.classList.add('active');
+    }
+  });
+
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+
+  // Page-specific initialization
+  if (id === 'estatisticas') renderStats();
+  if (id === 'gerador' && !window.__genInit) { window.__genInit = true; generateQuestion(); }
+  if (id === 'treino-infinito' && !window.__tiInit) { window.__tiInit = true; generateTiQuestion(); }
+}
+
+// TOGGLE GABARITO
+function toggleGab(btn) {
+  const content = btn.nextElementSibling;
+  content.classList.toggle('show');
+  btn.textContent = content.classList.contains('show') ? 'Ocultar Gabarito' : 'Ver Gabarito';
+}
+
+// MOBILE SIDEBAR
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+document.getElementById('overlay').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+});
+
+// SEARCH
+function searchContent(q) {
+  if (!q.trim()) return;
+  const keywords = {
+    'fator de potência': 'fp-conceito',
+    'fp': 'fp-conceito',
+    'triangulo': 'fp-triangulo',
+    'triângulo': 'fp-triangulo',
+    'potência ativa': 'fp-formulas',
+    'potência reativa': 'fp-formulas',
+    'potência aparente': 'fp-formulas',
+    'formulas': 'fp-formulas',
+    'fórmulas': 'fp-formulas',
+    'exemplos fp': 'fp-exemplos',
+    'capacitor': 'fp-correcao',
+    'correção': 'fp-correcao',
+    'motor': 'motor-conceitos',
+    'corrente motor': 'motor-formulas',
+    'cv': 'motor-tabela',
+    'trifásico': 'motor-formulas',
+    'trifasico': 'motor-formulas',
+    'tabela': 'motor-tabela',
+    'exercício': 'exercicios',
+    'exercicios': 'exercicios',
+    'simulador': 'simulador',
+    'calculadora': 'simulador',
+    'mapa': 'mapa-mental',
+    'dicas': 'dicas-provas',
+    'prova': 'dicas-provas',
+    'cotidiano': 'dicas-cotidiano',
+    'chuveiro': 'dicas-cotidiano',
+    'rendimento': 'motor-conceitos',
+    'eta': 'motor-conceitos',
+    'divisão': 'mat-divisao',
+    'divisao': 'mat-divisao',
+    'dividir': 'mat-divisao',
+    'raiz': 'mat-raiz',
+    'raiz quadrada': 'mat-raiz',
+    'fração': 'mat-fracoes',
+    'fracao': 'mat-fracoes',
+    'frações': 'mat-fracoes',
+    'porcentagem': 'mat-porcentagem',
+    'regra de três': 'mat-regra3',
+    'regra de tres': 'mat-regra3',
+    'macete': 'mat-macetes',
+    'atalho': 'mat-macetes',
+    'gerador': 'gerador',
+    'simulado': 'simulado',
+    'treino': 'treino-infinito',
+    'infinito': 'treino-infinito',
+    'estatística': 'estatisticas',
+    'estatistica': 'estatisticas',
+    'xp': 'estatisticas',
+    'medalha': 'estatisticas',
+    'nível': 'estatisticas',
+    'nivel': 'estatisticas',
+  };
+
+  const lq = q.toLowerCase();
+  for (const [key, page] of Object.entries(keywords)) {
+    if (lq.includes(key)) {
+      showPage(page);
+      return;
+    }
+  }
+}
+
+// CALCULATORS
+function toWatts(val, unit) {
+  if (unit === 'cv') return val * 736;
+  if (unit === 'kw') return val * 1000;
+  return val;
+}
+
+function nextDisjuntor(i) {
+  const vals = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200];
+  return vals.find(v => v >= i) || i;
+}
+
+function calcFP() {
+  const p = parseFloat(document.getElementById('fp-p').value);
+  const v = parseFloat(document.getElementById('fp-v').value);
+  const i = parseFloat(document.getElementById('fp-i').value);
+
+  if (!p || !v || !i) { alert('Preencha P, V e I'); return; }
+
+  const S = v * i;
+  const FP = p / S;
+  const Q = Math.sqrt(S*S - p*p);
+  const phi = Math.acos(FP) * 180 / Math.PI;
+
+  document.getElementById('r-fp-s').textContent = (S/1000).toFixed(3);
+  document.getElementById('r-fp-fp').textContent = FP.toFixed(3);
+  document.getElementById('r-fp-q').textContent = (Q/1000).toFixed(3);
+  document.getElementById('r-fp-phi').textContent = phi.toFixed(1) + '°';
+  document.getElementById('result-fp').classList.add('show');
+}
+
+function calcMono() {
+  const pRaw = parseFloat(document.getElementById('mono-p').value);
+  const unit = document.getElementById('mono-unit').value;
+  const v = parseFloat(document.getElementById('mono-v').value);
+  const fp = parseFloat(document.getElementById('mono-fp').value);
+  const eta = parseFloat(document.getElementById('mono-eta').value);
+
+  if (!pRaw || !v || !fp || !eta) { alert('Preencha todos os campos'); return; }
+
+  const p = toWatts(pRaw, unit);
+  const I = p / (v * fp * eta);
+  const disj = nextDisjuntor(Math.ceil(I * 1.25));
+
+  document.getElementById('r-mono-pw').textContent = (p/1000).toFixed(2);
+  document.getElementById('r-mono-i').textContent = I.toFixed(2);
+  document.getElementById('r-mono-disj').textContent = disj + 'A';
+  document.getElementById('result-mono').classList.add('show');
+}
+
+function calcTri() {
+  const pRaw = parseFloat(document.getElementById('tri-p').value);
+  const unit = document.getElementById('tri-unit').value;
+  const v = parseFloat(document.getElementById('tri-v').value);
+  const fp = parseFloat(document.getElementById('tri-fp').value);
+  const eta = parseFloat(document.getElementById('tri-eta').value);
+
+  if (!pRaw || !v || !fp || !eta) { alert('Preencha todos os campos'); return; }
+
+  const p = toWatts(pRaw, unit);
+  const sqrt3 = 1.732;
+  const I = p / (sqrt3 * v * fp * eta);
+  const S = sqrt3 * v * I;
+  const disj = nextDisjuntor(Math.ceil(I * 1.25));
+
+  document.getElementById('r-tri-pw').textContent = (p/1000).toFixed(2);
+  document.getElementById('r-tri-i').textContent = I.toFixed(2);
+  document.getElementById('r-tri-s').textContent = (S/1000).toFixed(2);
+  document.getElementById('r-tri-disj').textContent = disj + 'A';
+  document.getElementById('result-tri').classList.add('show');
+}
+
+// =====================================================================
+// MINI EXERCÍCIOS (dentro dos módulos de matemática)
+// =====================================================================
+function checkMini(inputId, correctVal, fbId, tolerance) {
+  tolerance = tolerance || 0.001;
+  const input = document.getElementById(inputId);
+  const fb = document.getElementById(fbId);
+  const raw = input.value.replace(',', '.').trim();
+  const val = parseFloat(raw);
+
+  if (isNaN(val)) {
+    fb.className = 'mini-feedback wrong';
+    fb.textContent = '⚠️ Digite um número válido.';
+    return;
+  }
+
+  if (Math.abs(val - correctVal) <= tolerance) {
+    fb.className = 'mini-feedback correct';
+    fb.textContent = '✅ Correto! Muito bem.';
+    addXP(5);
+  } else {
+    fb.className = 'mini-feedback wrong';
+    fb.textContent = `❌ Quase! A resposta correta é ${correctVal}.`;
+  }
+}
+
+function checkMiniText(inputId, acceptedAnswers, fbId) {
+  const input = document.getElementById(inputId);
+  const fb = document.getElementById(fbId);
+  const raw = input.value.trim().toLowerCase();
+
+  const match = acceptedAnswers.some(a => a.toLowerCase() === raw);
+
+  if (match) {
+    fb.className = 'mini-feedback correct';
+    fb.textContent = '✅ Correto! Muito bem.';
+    addXP(5);
+  } else {
+    fb.className = 'mini-feedback wrong';
+    fb.textContent = `❌ Tente novamente. Dica: ${acceptedAnswers[0]}`;
+  }
+}
+
+// =====================================================================
+// SISTEMA DE XP / NÍVEL / ESTATÍSTICAS (localStorage)
+// =====================================================================
+const STORAGE_KEY = 'acionalab_stats_v1';
+
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {
+    xp: 0,
+    totalQuestions: 0,
+    correctQuestions: 0,
+    bestStreak: 0,
+    currentStreak: 0,
+    totalTimeSeconds: 0,
+    timedQuestions: 0,
+    topics: {}, // { 'fp': {correct, wrong}, 'mono': {...}, ... }
+    simulados: []
+  };
+}
+
+function saveStats(s) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  } catch (e) {}
+}
+
+let stats = loadStats();
+
+function xpForLevel(level) {
+  return level * 100; // Nível 1→2 precisa 100xp, 2→3 precisa 200xp, etc (cumulativo abaixo)
+}
+
+function getLevelInfo(xp) {
+  let level = 1;
+  let remaining = xp;
+  let needed = xpForLevel(level);
+  while (remaining >= needed) {
+    remaining -= needed;
+    level++;
+    needed = xpForLevel(level);
+  }
+  return { level, currentXp: remaining, neededXp: needed };
+}
+
+function addXP(amount) {
+  stats.xp += amount;
+  saveStats(stats);
+  updateSidebarXP();
+  return amount;
+}
+
+function recordAnswer(topic, correct, timeSeconds) {
+  stats.totalQuestions++;
+  if (correct) {
+    stats.correctQuestions++;
+    stats.currentStreak++;
+    if (stats.currentStreak > stats.bestStreak) stats.bestStreak = stats.currentStreak;
+  } else {
+    stats.currentStreak = 0;
+  }
+  if (timeSeconds) {
+    stats.totalTimeSeconds += timeSeconds;
+    stats.timedQuestions++;
+  }
+  if (!stats.topics[topic]) stats.topics[topic] = { correct: 0, wrong: 0 };
+  if (correct) stats.topics[topic].correct++; else stats.topics[topic].wrong++;
+
+  saveStats(stats);
+  updateSidebarXP();
+}
+
+function updateSidebarXP() {
+  const info = getLevelInfo(stats.xp);
+  const lvlEl = document.getElementById('sidebar-level');
+  const xpEl = document.getElementById('sidebar-xp');
+  const fillEl = document.getElementById('sidebar-xp-fill');
+  if (lvlEl) lvlEl.textContent = 'Nível ' + info.level;
+  if (xpEl) xpEl.textContent = stats.xp;
+  if (fillEl) fillEl.style.width = Math.min(100, (info.currentXp / info.neededXp) * 100) + '%';
+}
+
+const MEDALS = [
+  { id: 'primeira', icon: '🥉', name: 'Primeiro Passo', desc: '1 questão respondida', check: s => s.totalQuestions >= 1 },
+  { id: 'dez', icon: '🥈', name: 'Aquecendo', desc: '10 questões resolvidas', check: s => s.totalQuestions >= 10 },
+  { id: 'cinquenta', icon: '🥇', name: 'Dedicado', desc: '50 questões resolvidas', check: s => s.totalQuestions >= 50 },
+  { id: 'cem', icon: '🏆', name: 'Veterano', desc: '100 questões resolvidas', check: s => s.totalQuestions >= 100 },
+  { id: 'streak5', icon: '🔥', name: 'Sequência de Fogo', desc: '5 acertos seguidos', check: s => s.bestStreak >= 5 },
+  { id: 'streak15', icon: '⚡', name: 'Imparável', desc: '15 acertos seguidos', check: s => s.bestStreak >= 15 },
+  { id: 'nivel5', icon: '🌟', name: 'Nível 5', desc: 'Alcançou o nível 5', check: s => getLevelInfo(s.xp).level >= 5 },
+  { id: 'nivel10', icon: '👑', name: 'Mestre', desc: 'Alcançou o nível 10', check: s => getLevelInfo(s.xp).level >= 10 },
+  { id: 'precisao', icon: '🎯', name: 'Precisão', desc: '90%+ de acerto (mín 20 questões)', check: s => s.totalQuestions >= 20 && (s.correctQuestions/s.totalQuestions) >= 0.9 },
+];
+
+function renderStats() {
+  const info = getLevelInfo(stats.xp);
+  const accuracy = stats.totalQuestions > 0 ? Math.round((stats.correctQuestions / stats.totalQuestions) * 100) : 0;
+  const avgTime = stats.timedQuestions > 0 ? Math.round(stats.totalTimeSeconds / stats.timedQuestions) : 0;
+
+  document.getElementById('st-total').textContent = stats.totalQuestions;
+  document.getElementById('st-accuracy').textContent = accuracy + '%';
+  document.getElementById('st-avgtime').textContent = avgTime + 's';
+  document.getElementById('st-bestreak').textContent = stats.bestStreak;
+  document.getElementById('st-xp').textContent = stats.xp;
+  document.getElementById('st-level').textContent = info.level;
+
+  // Topics with errors
+  const topicNames = { fp: 'Fator de Potência', mono: 'Motor Monofásico', tri: 'Motor Trifásico', mat: 'Matemática Aplicada' };
+  const topicsList = document.getElementById('st-topics-list');
+  const topicKeys = Object.keys(stats.topics).filter(k => (stats.topics[k].correct + stats.topics[k].wrong) > 0);
+
+  if (topicKeys.length === 0) {
+    topicsList.innerHTML = '<p class="desc" style="margin:0">Resolva algumas questões para ver suas estatísticas por tema.</p>';
+  } else {
+    topicsList.innerHTML = topicKeys.map(k => {
+      const t = stats.topics[k];
+      const total = t.correct + t.wrong;
+      const errPct = Math.round((t.wrong / total) * 100);
+      const color = errPct > 50 ? 'var(--red)' : errPct > 25 ? 'var(--accent3)' : 'var(--green)';
+      return `<div class="topic-error-bar">
+        <div class="topic-name">${topicNames[k] || k}</div>
+        <div class="topic-bar-track"><div class="topic-bar-fill" style="width:${errPct}%; background:${color}"></div></div>
+        <div class="topic-pct">${errPct}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Medals
+  const badgeGrid = document.getElementById('badge-grid');
+  badgeGrid.innerHTML = MEDALS.map(m => {
+    const unlocked = m.check(stats);
+    return `<div class="medal-item ${unlocked ? '' : 'locked'}">
+      <div class="medal-icon">${m.icon}</div>
+      <div class="medal-name">${m.name}</div>
+      <div class="medal-desc">${m.desc}</div>
+    </div>`;
+  }).join('');
+}
+
+function resetStats() {
+  if (!confirm('Tem certeza que deseja resetar TODAS as estatísticas, XP e medalhas? Esta ação não pode ser desfeita.')) return;
+  stats = { xp: 0, totalQuestions: 0, correctQuestions: 0, bestStreak: 0, currentStreak: 0, totalTimeSeconds: 0, timedQuestions: 0, topics: {}, simulados: [] };
+  saveStats(stats);
+  updateSidebarXP();
+  renderStats();
+}
+
+// =====================================================================
+// MOTOR DE GERAÇÃO DE QUESTÕES
+// =====================================================================
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randChoice(arr) { return arr[randInt(0, arr.length - 1)]; }
+function randFloat(min, max, decimals) {
+  const val = Math.random() * (max - min) + min;
+  return parseFloat(val.toFixed(decimals));
+}
+function fmt(n, decimals) {
+  decimals = decimals === undefined ? 2 : decimals;
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: decimals });
+}
+
+// ---- GERADOR: FATOR DE POTÊNCIA ----
+function genFP(diff) {
+  let v, i, fp;
+  if (diff === 'facil') {
+    v = randChoice([110, 127, 220]);
+    i = randInt(5, 20);
+    fp = randChoice([0.8, 0.85, 0.9, 1.0]);
+  } else if (diff === 'medio') {
+    v = randChoice([220, 380]);
+    i = randFloat(5, 40, 1);
+    fp = randFloat(0.65, 0.95, 2);
+  } else {
+    v = randChoice([220, 380, 440]);
+    i = randFloat(10, 100, 2);
+    fp = randFloat(0.55, 0.95, 2);
+  }
+
+  const S = v * i;
+  const P = S * fp;
+  const Q = Math.sqrt(Math.max(0, S*S - P*P));
+
+  const askWhat = randChoice(['P', 'S', 'Q', 'FP']);
+  let questionText, answer, unit, steps;
+
+  if (askWhat === 'S') {
+    questionText = `Um circuito é alimentado por <span class="q-data">${fmt(v,0)}V</span> com corrente de <span class="q-data">${fmt(i,1)}A</span>. Calcule a <strong>potência aparente (S)</strong> em VA.`;
+    answer = S;
+    unit = 'VA';
+    steps = [`S = V × I`, `S = ${fmt(v,0)} × ${fmt(i,1)}`, `S = ${fmt(S,1)} VA`];
+  } else if (askWhat === 'FP' ) {
+    questionText = `Um circuito tem potência ativa de <span class="q-data">${fmt(P,1)}W</span> e potência aparente de <span class="q-data">${fmt(S,1)}VA</span>. Calcule o <strong>Fator de Potência</strong>.`;
+    answer = fp;
+    unit = '(0 a 1)';
+    steps = [`FP = P / S`, `FP = ${fmt(P,1)} / ${fmt(S,1)}`, `FP = ${fmt(fp,3)}`];
+  } else if (askWhat === 'Q') {
+    questionText = `Um circuito possui potência ativa <span class="q-data">${fmt(P,1)}W</span> e potência aparente <span class="q-data">${fmt(S,1)}VA</span>. Calcule a <strong>potência reativa (Q)</strong> em VAr.`;
+    answer = Q;
+    unit = 'VAr';
+    steps = [`Q = √(S² − P²)`, `Q = √(${fmt(S,1)}² − ${fmt(P,1)}²)`, `Q = ${fmt(Q,1)} VAr`];
+  } else {
+    questionText = `Um circuito é alimentado por <span class="q-data">${fmt(v,0)}V</span>, corrente de <span class="q-data">${fmt(i,1)}A</span> e Fator de Potência <span class="q-data">${fmt(fp,2)}</span>. Calcule a <strong>potência ativa (P)</strong> em Watts.`;
+    answer = P;
+    unit = 'W';
+    steps = [`P = V × I × FP`, `P = ${fmt(v,0)} × ${fmt(i,1)} × ${fmt(fp,2)}`, `P = ${fmt(P,1)} W`];
+  }
+
+  return { questionText, answer, unit, steps, topic: 'fp', tolerance: Math.max(0.5, Math.abs(answer)*0.02) };
+}
+
+// ---- GERADOR: MOTOR MONOFÁSICO ----
+function genMono(diff) {
+  let cv, v, fp, eta;
+  if (diff === 'facil') {
+    cv = randChoice([1, 2, 3, 5]);
+    v = randChoice([127, 220]);
+    fp = randChoice([0.8, 0.85, 0.9]);
+    eta = randChoice([0.85, 0.9]);
+  } else if (diff === 'medio') {
+    cv = randChoice([2, 3, 5, 7.5, 10]);
+    v = randChoice([110, 127, 220]);
+    fp = randFloat(0.75, 0.92, 2);
+    eta = randFloat(0.82, 0.93, 2);
+  } else {
+    cv = randChoice([5, 7.5, 10, 15, 20]);
+    v = randChoice([127, 220]);
+    fp = randFloat(0.7, 0.9, 2);
+    eta = randFloat(0.8, 0.94, 2);
+  }
+
+  const P = cv * 736;
+  const I = P / (v * fp * eta);
+
+  const questionText = `Motor monofásico de <span class="q-data">${fmt(cv,1)} CV</span>, alimentado em <span class="q-data">${fmt(v,0)}V</span>, com Fator de Potência <span class="q-data">${fmt(fp,2)}</span> e Rendimento <span class="q-data">${fmt(eta*100,0)}%</span>. Calcule a <strong>corrente nominal</strong> em Ampères.`;
+
+  const steps = [
+    `P = ${fmt(cv,1)} × 736 = ${fmt(P,0)} W`,
+    `I = P / (V × FP × η)`,
+    `I = ${fmt(P,0)} / (${fmt(v,0)} × ${fmt(fp,2)} × ${fmt(eta,2)})`,
+    `I = ${fmt(P,0)} / ${fmt(v*fp*eta,2)}`,
+    `I = ${fmt(I,2)} A`
+  ];
+
+  return { questionText, answer: I, unit: 'A', steps, topic: 'mono', tolerance: Math.max(0.1, I*0.02) };
+}
+
+// ---- GERADOR: MOTOR TRIFÁSICO ----
+function genTri(diff) {
+  let cv, v, fp, eta;
+  if (diff === 'facil') {
+    cv = randChoice([3, 5, 7.5, 10]);
+    v = randChoice([220, 380]);
+    fp = randChoice([0.8, 0.85, 0.9]);
+    eta = randChoice([0.85, 0.9]);
+  } else if (diff === 'medio') {
+    cv = randChoice([5, 7.5, 10, 15, 20]);
+    v = randChoice([220, 380, 440]);
+    fp = randFloat(0.78, 0.92, 2);
+    eta = randFloat(0.85, 0.94, 2);
+  } else {
+    cv = randChoice([10, 15, 20, 25, 30, 50]);
+    v = randChoice([380, 440]);
+    fp = randFloat(0.7, 0.92, 2);
+    eta = randFloat(0.85, 0.95, 2);
+  }
+
+  const P = cv * 736;
+  const sqrt3 = 1.732;
+  const I = P / (sqrt3 * v * fp * eta);
+
+  const questionText = `Motor trifásico de <span class="q-data">${fmt(cv,1)} CV</span>, <span class="q-data">${fmt(v,0)}V</span>, Fator de Potência <span class="q-data">${fmt(fp,2)}</span> e Rendimento <span class="q-data">${fmt(eta*100,0)}%</span>. Calcule a <strong>corrente nominal</strong> em Ampères.`;
+
+  const steps = [
+    `P = ${fmt(cv,1)} × 736 = ${fmt(P,0)} W`,
+    `I = P / (√3 × V × FP × η)`,
+    `I = ${fmt(P,0)} / (1,732 × ${fmt(v,0)} × ${fmt(fp,2)} × ${fmt(eta,2)})`,
+    `I = ${fmt(P,0)} / ${fmt(sqrt3*v*fp*eta,2)}`,
+    `I = ${fmt(I,2)} A`
+  ];
+
+  return { questionText, answer: I, unit: 'A', steps, topic: 'tri', tolerance: Math.max(0.1, I*0.02) };
+}
+
+// ---- GERADOR: MATEMÁTICA APLICADA ----
+function genMat(diff) {
+  const type = randChoice(['divisao', 'porcentagem', 'regra3', 'cv']);
+
+  if (type === 'divisao') {
+    let a, b;
+    if (diff === 'facil') { b = randInt(2, 10); a = b * randInt(2, 20); }
+    else if (diff === 'medio') { a = randInt(100, 9999); b = randInt(2, 50); }
+    else { a = randFloat(100, 99999, 1); b = randFloat(2, 99, 2); }
+
+    const result = a / b;
+    return {
+      questionText: `Calcule: <span class="q-data">${fmt(a,2)}</span> ÷ <span class="q-data">${fmt(b,2)}</span> = ?`,
+      answer: result, unit: '', topic: 'mat', tolerance: Math.max(0.01, Math.abs(result)*0.01),
+      steps: [`${fmt(a,2)} ÷ ${fmt(b,2)}`, `= ${fmt(result,3)}`]
+    };
+  }
+
+  if (type === 'porcentagem') {
+    const pct = diff === 'facil' ? randChoice([10,20,25,50]) : diff === 'medio' ? randInt(5,95) : randFloat(1,99,1);
+    const base = diff === 'facil' ? randInt(10,500)*10 : randInt(100, 50000);
+    const result = (base * pct) / 100;
+    return {
+      questionText: `Calcule <span class="q-data">${fmt(pct,1)}%</span> de <span class="q-data">${fmt(base,0)}</span>.`,
+      answer: result, unit: '', topic: 'mat', tolerance: Math.max(0.5, Math.abs(result)*0.01),
+      steps: [`${fmt(pct,1)}% de ${fmt(base,0)}`, `= ${fmt(base,0)} × (${fmt(pct,1)}/100)`, `= ${fmt(result,2)}`]
+    };
+  }
+
+  if (type === 'regra3') {
+    const a1 = randInt(2,10), b1 = randInt(10,200);
+    const a2 = randInt(2,20);
+    const result = (a2 * b1) / a1;
+    return {
+      questionText: `Se <span class="q-data">${a1}</span> motores consomem <span class="q-data">${b1}A</span> juntos, quanto consomem <span class="q-data">${a2}</span> motores idênticos nas mesmas condições?`,
+      answer: result, unit: 'A', topic: 'mat', tolerance: Math.max(0.1, Math.abs(result)*0.01),
+      steps: [`${a1} motores —— ${b1}A`, `${a2} motores —— X`, `X = (${a2} × ${b1}) / ${a1}`, `X = ${fmt(result,2)} A`]
+    };
+  }
+
+  // CV conversion
+  const cv = diff === 'facil' ? randChoice([1,2,3,5,7.5,10]) : diff === 'medio' ? randFloat(1,30,1) : randFloat(0.5,75,2);
+  const result = cv * 736;
+  return {
+    questionText: `Converta <span class="q-data">${fmt(cv,2)} CV</span> para Watts.`,
+    answer: result, unit: 'W', topic: 'mat', tolerance: Math.max(1, Math.abs(result)*0.01),
+    steps: [`P(W) = CV × 736`, `P = ${fmt(cv,2)} × 736`, `P = ${fmt(result,1)} W`]
+  };
+}
+
+function generateQuestionByTopic(topic, diff) {
+  if (topic === 'fp') return genFP(diff);
+  if (topic === 'mono') return genMono(diff);
+  if (topic === 'tri') return genTri(diff);
+  return genMat(diff);
+}
+
+// =====================================================================
+// PAGINA: GERADOR DE EXERCÍCIOS
+// =====================================================================
+let genState = { topic: 'fp', diff: 'facil', current: null, streak: 0 };
+
+function setGenTopic(t) {
+  genState.topic = t;
+  document.querySelectorAll('#gen-topic-tabs .gen-mode-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.topic === t);
+  });
+  generateQuestion();
+}
+
+function setGenDiff(d) {
+  genState.diff = d;
+  document.querySelectorAll('#gen-diff-select .gen-diff-btn').forEach(el => {
+    el.classList.toggle('active', el.dataset.diff === d);
+  });
+  generateQuestion();
+}
+
+const topicLabels = { fp: 'Fator de Potência', mono: 'Motor Monofásico', tri: 'Motor Trifásico', mat: 'Matemática Aplicada' };
+const diffLabels = { facil: '🟢 Fácil', medio: '🟡 Médio', dificil: '🔴 Difícil' };
+
+function generateQuestion() {
+  const q = generateQuestionByTopic(genState.topic, genState.diff);
+  genState.current = q;
+
+  document.getElementById('gen-q-tag').textContent = `${topicLabels[genState.topic]} · ${diffLabels[genState.diff]}`;
+  document.getElementById('gen-q-text').innerHTML = q.questionText;
+  document.getElementById('gen-unit-label').textContent = q.unit;
+  document.getElementById('gen-answer-input').value = '';
+  document.getElementById('gen-streak').textContent = genState.streak;
+
+  const fb = document.getElementById('gen-feedback');
+  fb.className = 'feedback-panel';
+  fb.innerHTML = '';
+
+  document.getElementById('gen-btn-verify').style.display = 'inline-block';
+  document.getElementById('gen-btn-next').style.display = 'none';
+  document.getElementById('gen-answer-input').disabled = false;
+}
+
+function verifyGenAnswer() {
+  const q = genState.current;
+  const input = document.getElementById('gen-answer-input');
+  const raw = input.value.replace(',', '.').trim();
+  const val = parseFloat(raw);
+  const fb = document.getElementById('gen-feedback');
+
+  if (isNaN(val)) { alert('Digite um número válido.'); return; }
+
+  const correct = Math.abs(val - q.answer) <= q.tolerance;
+
+  if (correct) {
+    genState.streak++;
+    addXP(10 + (genState.diff === 'medio' ? 5 : genState.diff === 'dificil' ? 10 : 0));
+    fb.className = 'feedback-panel correct';
+    fb.innerHTML = `<div class="feedback-title">✅ Correto! +${10 + (genState.diff === 'medio' ? 5 : genState.diff === 'dificil' ? 10 : 0)} XP</div>
+      <div class="feedback-steps">${q.steps.map(s => `<div class="fs-line">${s}</div>`).join('')}</div>`;
+  } else {
+    genState.streak = 0;
+    fb.className = 'feedback-panel wrong';
+    fb.innerHTML = `<div class="feedback-title">❌ Não foi essa. Resposta correta: ${fmt(q.answer,2)} ${q.unit}</div>
+      <div class="feedback-steps">${q.steps.map(s => `<div class="fs-line">${s}</div>`).join('')}<div class="fs-result">Você respondeu: ${fmt(val,2)}</div></div>`;
+  }
+
+  recordAnswer(q.topic, correct, 0);
+  document.getElementById('gen-streak').textContent = genState.streak;
+  document.getElementById('gen-btn-verify').style.display = 'none';
+  document.getElementById('gen-btn-next').style.display = 'inline-block';
+  input.disabled = true;
+}
+
+// =====================================================================
+// PAGINA: TREINO INFINITO
+// =====================================================================
+let tiState = { diff: 'facil', current: null, streak: 0, solved: 0 };
+
+function setTiDiff(d) {
+  tiState.diff = d;
+  document.querySelectorAll('#ti-diff-select .gen-diff-btn').forEach(el => {
+    el.classList.toggle('active', el.dataset.diff === d);
+  });
+  generateTiQuestion();
+}
+
+function generateTiQuestion() {
+  const topics = ['fp', 'mono', 'tri', 'mat'];
+  const topic = randChoice(topics);
+  const q = generateQuestionByTopic(topic, tiState.diff);
+  tiState.current = q;
+
+  document.getElementById('ti-q-tag').textContent = `${topicLabels[topic]} · ${diffLabels[tiState.diff]}`;
+  document.getElementById('ti-q-text').innerHTML = q.questionText;
+  document.getElementById('ti-unit-label').textContent = q.unit;
+  document.getElementById('ti-answer-input').value = '';
+  document.getElementById('ti-streak').textContent = tiState.streak;
+  document.getElementById('ti-solved').textContent = tiState.solved;
+
+  const fb = document.getElementById('ti-feedback');
+  fb.className = 'feedback-panel';
+  fb.innerHTML = '';
+
+  document.getElementById('ti-btn-verify').style.display = 'inline-block';
+  document.getElementById('ti-btn-next').style.display = 'none';
+  document.getElementById('ti-answer-input').disabled = false;
+}
+
+function verifyTiAnswer() {
+  const q = tiState.current;
+  const input = document.getElementById('ti-answer-input');
+  const raw = input.value.replace(',', '.').trim();
+  const val = parseFloat(raw);
+  const fb = document.getElementById('ti-feedback');
+
+  if (isNaN(val)) { alert('Digite um número válido.'); return; }
+
+  const correct = Math.abs(val - q.answer) <= q.tolerance;
+  tiState.solved++;
+
+  if (correct) {
+    tiState.streak++;
+    addXP(8);
+    fb.className = 'feedback-panel correct';
+    fb.innerHTML = `<div class="feedback-title">✅ Correto! +8 XP</div>
+      <div class="feedback-steps">${q.steps.map(s => `<div class="fs-line">${s}</div>`).join('')}</div>`;
+  } else {
+    tiState.streak = 0;
+    fb.className = 'feedback-panel wrong';
+    fb.innerHTML = `<div class="feedback-title">❌ Resposta correta: ${fmt(q.answer,2)} ${q.unit}</div>
+      <div class="feedback-steps">${q.steps.map(s => `<div class="fs-line">${s}</div>`).join('')}</div>`;
+  }
+
+  recordAnswer(q.topic, correct, 0);
+  document.getElementById('ti-streak').textContent = tiState.streak;
+  document.getElementById('ti-solved').textContent = tiState.solved;
+  document.getElementById('ti-btn-verify').style.display = 'none';
+  document.getElementById('ti-btn-next').style.display = 'inline-block';
+  input.disabled = true;
+}
+
+// =====================================================================
+// PAGINA: SIMULADO (MODO PROVA)
+// =====================================================================
+let simState = { questions: [], current: 0, answers: [], startTime: null, timerInterval: null, elapsed: 0 };
+
+function startSimulado() {
+  const topics = ['fp', 'mono', 'tri', 'mat'];
+  const diffs = ['facil', 'medio', 'dificil'];
+  simState.questions = [];
+  for (let i = 0; i < 10; i++) {
+    const topic = randChoice(topics);
+    const diff = i < 3 ? 'facil' : i < 7 ? 'medio' : 'dificil';
+    simState.questions.push(generateQuestionByTopic(topic, diff));
+  }
+  simState.current = 0;
+  simState.answers = [];
+  simState.elapsed = 0;
+
+  document.getElementById('sim-setup-view').style.display = 'none';
+  document.getElementById('sim-results-view').style.display = 'none';
+  document.getElementById('sim-active-view').style.display = 'block';
+
+  simState.startTime = Date.now();
+  if (simState.timerInterval) clearInterval(simState.timerInterval);
+  simState.timerInterval = setInterval(updateSimTimer, 1000);
+
+  showSimQuestion();
+}
+
+function updateSimTimer() {
+  simState.elapsed = Math.floor((Date.now() - simState.startTime) / 1000);
+  const m = Math.floor(simState.elapsed / 60).toString().padStart(2, '0');
+  const s = (simState.elapsed % 60).toString().padStart(2, '0');
+  document.getElementById('sim-timer-display').textContent = `${m}:${s}`;
+}
+
+function showSimQuestion() {
+  const q = simState.questions[simState.current];
+  document.getElementById('sim-q-tag').textContent = `${topicLabels[q.topic]}`;
+  document.getElementById('sim-q-text').innerHTML = q.questionText;
+  document.getElementById('sim-unit-label').textContent = q.unit;
+  document.getElementById('sim-answer-input').value = '';
+  document.getElementById('sim-current-num').textContent = simState.current + 1;
+  document.getElementById('sim-btn-action').textContent = simState.current === 9 ? 'Finalizar Simulado' : 'Próxima →';
+}
+
+function simNextQuestion() {
+  const input = document.getElementById('sim-answer-input');
+  const raw = input.value.replace(',', '.').trim();
+  const val = parseFloat(raw);
+  simState.answers.push(isNaN(val) ? null : val);
+
+  if (simState.current < 9) {
+    simState.current++;
+    showSimQuestion();
+  } else {
+    finishSimulado();
+  }
+}
+
+function finishSimulado() {
+  clearInterval(simState.timerInterval);
+  document.getElementById('sim-active-view').style.display = 'none';
+  document.getElementById('sim-results-view').style.display = 'block';
+
+  let correctCount = 0;
+  const reviewHTML = simState.questions.map((q, idx) => {
+    const userAnswer = simState.answers[idx];
+    const correct = userAnswer !== null && Math.abs(userAnswer - q.answer) <= q.tolerance;
+    if (correct) correctCount++;
+    recordAnswer(q.topic, correct, simState.elapsed / 10);
+
+    return `<div class="sim-review-item">
+      <div class="sim-review-icon">${correct ? '✅' : '❌'}</div>
+      <div class="sim-review-body">
+        <div class="sr-q">${idx+1}. ${q.questionText.replace(/<[^>]*>/g,'')}</div>
+        <div class="sr-a">Sua resposta: ${userAnswer !== null ? fmt(userAnswer,2) : '(vazio)'} ${q.unit} &nbsp;|&nbsp; Correta: ${fmt(q.answer,2)} ${q.unit}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const pct = Math.round((correctCount / 10) * 100);
+  const circle = document.getElementById('sim-score-circle');
+  const color = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--accent3)' : 'var(--red)';
+  circle.style.borderColor = color;
+  document.getElementById('sim-score-pct').textContent = pct + '%';
+  document.getElementById('sim-score-pct').style.color = color;
+
+  const m = Math.floor(simState.elapsed / 60);
+  const s = simState.elapsed % 60;
+  document.getElementById('sim-results-sub').textContent = `${correctCount} de 10 questões corretas · Tempo total: ${m}min ${s}s`;
+  document.getElementById('sim-review-list').innerHTML = reviewHTML;
+
+  addXP(pct >= 70 ? 50 : pct >= 40 ? 25 : 10);
+
+  stats.simulados.push({ date: Date.now(), score: pct, time: simState.elapsed });
+  saveStats(stats);
+}
+
+// Init
+updateSidebarXP();
+showPage('intro');
+</script>
+</body>
+</html>
