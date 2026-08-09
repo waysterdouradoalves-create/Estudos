@@ -22,14 +22,31 @@ Claude (Anthropic) como "cérebro".
    .venv\Scripts\activate
    ```
 
-3. Instale as dependências:
+3. Instale as dependências principais (modo texto, automação do PC):
 
    ```bat
    pip install -r requirements.txt
    ```
 
-   > Se `pyaudio` falhar ao instalar (comum no Windows), use:
-   > `pip install pipwin && pipwin install pyaudio`
+   Se você também quer o **modo voz**, instale as dependências extras:
+
+   ```bat
+   pip install -r requirements-voz.txt
+   ```
+
+   > `pyaudio` costuma falhar ao compilar em versões muito novas do Python (ex: 3.14), porque
+   > ainda não existe um pacote pré-compilado pra elas — o pip tenta compilar do zero e pede
+   > o `portaudio.h`, que não vem instalado. Se isso acontecer, o jeito mais simples é criar
+   > o ambiente virtual com o Python 3.12 só pra este projeto:
+   >
+   > ```bat
+   > choco install python312 -y
+   > py -3.12 -m venv .venv
+   > .venv\Scripts\activate
+   > pip install -r requirements.txt -r requirements-voz.txt
+   > ```
+   >
+   > O modo texto funciona normalmente sem essas dependências de voz.
 
 4. Copie `.env.example` para `.env` e preencha sua chave da API:
 
