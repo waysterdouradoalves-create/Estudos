@@ -20,15 +20,27 @@ _motor_voz = pyttsx3.init()
 _motor_voz.setProperty("rate", 175)
 
 
+def _medir_ruido_ambiente(fluxo, chunk: int = 1024, amostras: int = 20) -> float:
+    """Mede o volume médio do ambiente por um instante, para calibrar a detecção de palma."""
+    valores = [audioop.rms(fluxo.read(chunk, exception_on_overflow=False), 2) for _ in range(amostras)]
+    return sum(valores) / len(valores)
+
+
 def esperar_palma() -> None:
-    """Fica escutando o microfone em segundo plano até detectar uma palma (som curto e alto)."""
+    """Fica escutando o microfone em segundo plano até detectar uma palma (som curto e alto).
+
+    Se auto-calibra: mede o barulho do ambiente por um instante e considera "palma"
+    qualquer pico bem acima disso, então funciona sem ajuste manual em qualquer microfone.
+    """
     p = pyaudio.PyAudio()
     fluxo = p.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=1024)
     try:
+        ruido_ambiente = _medir_ruido_ambiente(fluxo)
+        limiar = max(ruido_ambiente * config.MULTIPLICADOR_PALMA, config.LIMIAR_PALMA_MINIMO)
         while True:
             dados = fluxo.read(1024, exception_on_overflow=False)
             volume = audioop.rms(dados, 2)
-            if volume > config.LIMIAR_PALMA:
+            if volume > limiar:
                 return
     finally:
         fluxo.stop_stream()

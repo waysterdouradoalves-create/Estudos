@@ -6,7 +6,7 @@ Claude (Anthropic) como "cérebro".
 ## O que ele já faz
 
 - **Conversa** por texto ou por voz (fala em português) — no modo voz, você **bate palma**
-  para chamar o Jarvis, ele avisa "Pode falar" e escuta seu comando.
+  para chamar o Jarvis, ele toca um bipe e já escuta seu comando.
 - **Abre e fecha programas** (`abrir_programa`, `fechar_programa`).
 - **Executa comandos** no terminal do Windows (`executar_comando`).
 - **Lista processos** em execução (`listar_processos`).
@@ -73,9 +73,9 @@ Google):
 python -m jarvis.main --modo voz
 ```
 
-No modo voz, **bata palma** para chamar o Jarvis — ele responde "Pode falar" e aí é só falar o
-comando. Se ele não estiver detectando suas palmas (ou estiver disparando sozinho com barulho
-do ambiente), ajuste `JARVIS_LIMIAR_PALMA` no `.env` (menor = mais sensível).
+No modo voz, **bata palma** para chamar o Jarvis — ele toca um bipe curto e já escuta o
+comando. A detecção se ajusta sozinha ao barulho do ambiente (mede o ruído de fundo por um
+instante antes de esperar a palma), então normalmente não precisa configurar nada.
 
 Diga "sair" (texto) ou "sair"/"tchau" (voz) para encerrar.
 
@@ -92,9 +92,9 @@ python -m jarvis.calibrar
   Confira em **Configurações → Privacidade e segurança → Microfone** se "Permitir que os apps
   acessem seu microfone" está ativado, e em **Configurações → Sistema → Som → Entrada** se o
   dispositivo certo está selecionado.
-- Se o número **se mexer**, anote o valor mais alto que aparece quando você bate palma, e
-  coloque um pouco abaixo disso em `JARVIS_LIMIAR_PALMA` no `.env` (ex: se a palma bate uns
-  8000, use 5000 ou 6000).
+- Se o número **se mexer mas a palma ainda não é detectada**, ajuste no `.env`:
+  `JARVIS_MULTIPLICADOR_PALMA` (padrão 4) — diminua para 2 ou 3 se as palmas continuarem
+  ignoradas, ou aumente se ele disparar sozinho com barulho do ambiente.
 
 ## Controlando dispositivos inteligentes (opcional)
 
