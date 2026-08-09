@@ -33,7 +33,7 @@ def modo_voz() -> None:
         try:
             print("Aguardando palma...")
             voice.esperar_palma()
-            voice.falar("Pode falar.")
+            voice.bipe()
 
             texto_usuario = voice.ouvir()
             if not texto_usuario:

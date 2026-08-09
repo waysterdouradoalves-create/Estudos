@@ -4,6 +4,11 @@ import speech_recognition as sr
 import pyttsx3
 
 try:
+    import winsound
+except ImportError:  # não estamos no Windows (ex: rodando testes em outro SO)
+    winsound = None
+
+try:
     import audioop
 except ImportError:  # Python 3.13+ removeu o módulo audioop da biblioteca padrão
     import audioop_lts as audioop
@@ -29,6 +34,12 @@ def esperar_palma() -> None:
         fluxo.stop_stream()
         fluxo.close()
         p.terminate()
+
+
+def bipe() -> None:
+    """Toca um bipe curto (quase instantâneo) para avisar que o Jarvis já está ouvindo."""
+    if winsound is not None:
+        winsound.Beep(880, 120)
 
 
 def ouvir() -> str | None:
