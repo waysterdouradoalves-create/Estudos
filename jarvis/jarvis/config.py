@@ -12,7 +12,7 @@ MODEL = os.getenv("JARVIS_MODEL", "claude-sonnet-5")
 # considera "palma" qualquer som MULTIPLICADOR_PALMA vezes mais alto que isso (se ajusta
 # sozinho a cada microfone, sem precisar de um número fixo). LIMIAR_PALMA_MINIMO evita
 # falsos positivos em ambientes muito silenciosos, onde o ruído de fundo é quase zero.
-MULTIPLICADOR_PALMA = float(os.getenv("JARVIS_MULTIPLICADOR_PALMA", "4"))
+MULTIPLICADOR_PALMA = float(os.getenv("JARVIS_MULTIPLICADOR_PALMA", "2"))
 LIMIAR_PALMA_MINIMO = int(os.getenv("JARVIS_LIMIAR_PALMA_MINIMO", "300"))
 
 # Opcional: integração com Home Assistant para controlar dispositivos (luzes, tomadas, etc.)
