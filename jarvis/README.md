@@ -5,7 +5,8 @@ Claude (Anthropic) como "cérebro".
 
 ## O que ele já faz
 
-- **Conversa** por texto ou por voz (fala em português).
+- **Conversa** por texto ou por voz (fala em português) — no modo voz, você **bate palma**
+  para chamar o Jarvis, ele avisa "Pode falar" e escuta seu comando.
 - **Abre e fecha programas** (`abrir_programa`, `fechar_programa`).
 - **Executa comandos** no terminal do Windows (`executar_comando`).
 - **Lista processos** em execução (`listar_processos`).
@@ -72,6 +73,10 @@ Google):
 python -m jarvis.main --modo voz
 ```
 
+No modo voz, **bata palma** para chamar o Jarvis — ele responde "Pode falar" e aí é só falar o
+comando. Se ele não estiver detectando suas palmas (ou estiver disparando sozinho com barulho
+do ambiente), ajuste `JARVIS_LIMIAR_PALMA` no `.env` (menor = mais sensível).
+
 Diga "sair" (texto) ou "sair"/"tchau" (voz) para encerrar.
 
 ## Controlando dispositivos inteligentes (opcional)
@@ -96,6 +101,6 @@ para comandos simples).
 
 ## Próximos passos possíveis
 
-- Palavra de ativação ("Jarvis, ...") para não precisar apertar nada.
+- Palavra de ativação por voz ("Jarvis, ...") além da palma.
 - Rodar como serviço/inicializar com o Windows.
 - Mais ferramentas: controle de volume, brilho, buscas na web, agenda, etc.

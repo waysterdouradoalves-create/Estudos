@@ -26,11 +26,15 @@ def modo_texto() -> None:
 def modo_voz() -> None:
     from . import voice
 
-    print("Jarvis (modo voz). Pressione Ctrl+C para encerrar.\n")
+    print("Jarvis (modo voz). Bata palma para chamar. Pressione Ctrl+C para encerrar.\n")
     historico: list[dict] = []
-    voice.falar("Jarvis pronto. Pode falar.")
+    voice.falar("Jarvis ligado. Bata palma para me chamar.")
     while True:
         try:
+            print("Aguardando palma...")
+            voice.esperar_palma()
+            voice.falar("Pode falar.")
+
             texto_usuario = voice.ouvir()
             if not texto_usuario:
                 continue

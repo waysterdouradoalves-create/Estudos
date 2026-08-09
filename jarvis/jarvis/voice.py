@@ -1,10 +1,34 @@
-"""Entrada e saída de voz do Jarvis (reconhecimento de fala e texto-para-fala)."""
+"""Entrada e saída de voz do Jarvis (reconhecimento de fala, texto-para-fala e palma)."""
+import pyaudio
 import speech_recognition as sr
 import pyttsx3
+
+try:
+    import audioop
+except ImportError:  # Python 3.13+ removeu o módulo audioop da biblioteca padrão
+    import audioop_lts as audioop
+
+from . import config
 
 _reconhecedor = sr.Recognizer()
 _motor_voz = pyttsx3.init()
 _motor_voz.setProperty("rate", 175)
+
+
+def esperar_palma() -> None:
+    """Fica escutando o microfone em segundo plano até detectar uma palma (som curto e alto)."""
+    p = pyaudio.PyAudio()
+    fluxo = p.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=1024)
+    try:
+        while True:
+            dados = fluxo.read(1024, exception_on_overflow=False)
+            volume = audioop.rms(dados, 2)
+            if volume > config.LIMIAR_PALMA:
+                return
+    finally:
+        fluxo.stop_stream()
+        fluxo.close()
+        p.terminate()
 
 
 def ouvir() -> str | None:
