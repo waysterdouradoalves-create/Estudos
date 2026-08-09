@@ -1,31 +1,12 @@
-"""Lista de lembretes que o usuário pode guardar e consultar depois.
+"""Lista de lembretes, guardada no banco de dados local (SQLite).
 
 Lembretes com data/hora marcada são avisados automaticamente quando chega a hora
 (veja jarvis.avisos); lembretes sem data ficam só na lista, pra consulta."""
-import json
-import os
 from datetime import datetime
 
 from anthropic import beta_tool
 
-_ARQUIVO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "dados", "lembretes.json")
-
-
-def _carregar() -> list[dict]:
-    if not os.path.exists(_ARQUIVO):
-        return []
-    with open(_ARQUIVO, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _salvar(lista: list[dict]) -> None:
-    os.makedirs(os.path.dirname(_ARQUIVO), exist_ok=True)
-    with open(_ARQUIVO, "w", encoding="utf-8") as f:
-        json.dump(lista, f, ensure_ascii=False, indent=2)
-
-
-def _pendentes(lista: list[dict]) -> list[dict]:
-    return [item for item in lista if not item.get("avisado")]
+from . import banco
 
 
 @beta_tool
@@ -40,9 +21,11 @@ def criar_lembrete(texto: str, quando: str = "") -> str:
             o usuário não especificou horário — nesse caso é só um item de lista, sem
             aviso automático.
     """
-    lembretes = _carregar()
-    lembretes.append({"texto": texto, "quando": quando or None, "avisado": False})
-    _salvar(lembretes)
+    with banco.conexao() as conexao:
+        conexao.execute(
+            "INSERT INTO lembretes (texto, quando, avisado) VALUES (?, ?, 0)",
+            (texto, quando or None),
+        )
     if quando:
         return f"Lembrete adicionado: {texto} (aviso em {quando})"
     return f"Lembrete adicionado: {texto}"
@@ -51,16 +34,19 @@ def criar_lembrete(texto: str, quando: str = "") -> str:
 @beta_tool
 def listar_lembretes() -> str:
     """Lista todos os lembretes pendentes."""
-    lembretes = _pendentes(_carregar())
-    if not lembretes:
+    with banco.conexao() as conexao:
+        linhas = conexao.execute(
+            "SELECT texto, quando FROM lembretes WHERE avisado = 0 ORDER BY id"
+        ).fetchall()
+    if not linhas:
         return "Você não tem nenhum lembrete guardado."
-    linhas = []
-    for i, item in enumerate(lembretes):
-        if item.get("quando"):
-            linhas.append(f"{i + 1}. {item['texto']} — {item['quando']}")
+    resultado = []
+    for i, linha in enumerate(linhas):
+        if linha["quando"]:
+            resultado.append(f"{i + 1}. {linha['texto']} — {linha['quando']}")
         else:
-            linhas.append(f"{i + 1}. {item['texto']}")
-    return "\n".join(linhas)
+            resultado.append(f"{i + 1}. {linha['texto']}")
+    return "\n".join(resultado)
 
 
 @beta_tool
@@ -71,15 +57,16 @@ def remover_lembrete(numero: int) -> str:
     Args:
         numero: O número do lembrete a remover, como aparece em listar_lembretes.
     """
-    todos = _carregar()
-    pendentes = _pendentes(todos)
-    indice = numero - 1
-    if 0 <= indice < len(pendentes):
-        alvo = pendentes[indice]
-        todos.remove(alvo)
-        _salvar(todos)
-        return f"Lembrete removido: {alvo['texto']}"
-    return "Não encontrei um lembrete com esse número."
+    with banco.conexao() as conexao:
+        linhas = conexao.execute(
+            "SELECT id, texto FROM lembretes WHERE avisado = 0 ORDER BY id"
+        ).fetchall()
+        indice = numero - 1
+        if 0 <= indice < len(linhas):
+            alvo = linhas[indice]
+            conexao.execute("DELETE FROM lembretes WHERE id = ?", (alvo["id"],))
+            return f"Lembrete removido: {alvo['texto']}"
+        return "Não encontrei um lembrete com esse número."
 
 
 def verificar_vencidos() -> list[str]:
@@ -87,23 +74,20 @@ def verificar_vencidos() -> list[str]:
 
     Não é uma ferramenta do Claude — usada internamente pelo verificador em segundo
     plano (jarvis.avisos)."""
-    lembretes = _carregar()
     agora = datetime.now()
     vencidos = []
-    mudou = False
-    for item in lembretes:
-        if item.get("avisado") or not item.get("quando"):
-            continue
-        try:
-            quando = datetime.strptime(item["quando"], "%Y-%m-%d %H:%M")
-        except ValueError:
-            continue
-        if quando <= agora:
-            vencidos.append(item["texto"])
-            item["avisado"] = True
-            mudou = True
-    if mudou:
-        _salvar(lembretes)
+    with banco.conexao() as conexao:
+        linhas = conexao.execute(
+            "SELECT id, texto, quando FROM lembretes WHERE avisado = 0 AND quando IS NOT NULL"
+        ).fetchall()
+        for linha in linhas:
+            try:
+                quando = datetime.strptime(linha["quando"], "%Y-%m-%d %H:%M")
+            except ValueError:
+                continue
+            if quando <= agora:
+                vencidos.append(linha["texto"])
+                conexao.execute("UPDATE lembretes SET avisado = 1 WHERE id = ?", (linha["id"],))
     return vencidos
 
 

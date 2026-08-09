@@ -15,8 +15,14 @@ Claude (Anthropic) como "cérebro".
 - **Monitora o sistema**: uso de CPU, RAM, disco e GPU (placas NVIDIA).
 - **Lembra de você**: guarda preferências e informações que você conta, e você pode perguntar
   "o que você lembra sobre mim" ou pedir pra esquecer algo.
-- **Guarda lembretes** numa lista que você consulta quando quiser (não avisa sozinho na hora
-  certa ainda).
+- **Lembretes com aviso automático**: "me lembra da reunião às 15h" — ele avisa sozinho
+  (falando, no modo voz) quando chegar a hora, sem você precisar perguntar.
+- **Rotinas**: salve uma sequência de tarefas ("trabalhar" = abrir navegador, VS Code, etc.) e
+  execute tudo de uma vez depois com um comando curto.
+- **Interface visual**: uma janela mostra o status (ligando/ouvindo/pensando/falando), uso de
+  CPU/RAM em tempo real, o último comando e o relógio.
+- **Guarda tudo num banco de dados local** (SQLite) — memórias, lembretes, rotinas e histórico
+  de conversas, incluindo a ferramenta "mostra meu histórico de comandos".
 - **Controla dispositivos inteligentes** (luzes, tomadas, etc.) via
   [Home Assistant](https://www.home-assistant.io/) — opcional.
 
@@ -82,7 +88,9 @@ python -m jarvis.main --modo voz
 
 No modo voz, **bata palma** para chamar o Jarvis — ele toca um bipe curto e já escuta o
 comando. A detecção se ajusta sozinha ao barulho do ambiente (mede o ruído de fundo por um
-instante antes de esperar a palma), então normalmente não precisa configurar nada.
+instante antes de esperar a palma), então normalmente não precisa configurar nada. Uma janela
+visual abre junto mostrando o status e uso do sistema — para rodar sem ela, use
+`python -m jarvis.main --modo voz --sem-interface`.
 
 Diga "sair" (texto) ou "sair"/"tchau" (voz) para encerrar.
 
@@ -100,8 +108,9 @@ python -m jarvis.calibrar
   acessem seu microfone" está ativado, e em **Configurações → Sistema → Som → Entrada** se o
   dispositivo certo está selecionado.
 - Se o número **se mexer mas a palma ainda não é detectada**, ajuste no `.env`:
-  `JARVIS_MULTIPLICADOR_PALMA` (padrão 2) — diminua se as palmas continuarem ignoradas, ou
-  aumente se ele disparar sozinho com barulho do ambiente.
+  `JARVIS_MULTIPLICADOR_PALMA` (padrão 1.3) e `JARVIS_LIMIAR_PALMA_MINIMO` (padrão 700) —
+  diminua se as palmas continuarem ignoradas, ou aumente se ele disparar sozinho com barulho
+  do ambiente.
 
 ## Rodando sem precisar abrir terminal
 
@@ -143,5 +152,16 @@ para comandos simples).
 ## Próximos passos possíveis
 
 - Palavra de ativação por voz ("Jarvis, ...") além da palma.
-- Lembretes que avisam sozinhos na hora certa (hoje é só uma lista consultável).
 - Mais ferramentas: controle de volume, brilho, agenda, etc.
+
+## Detalhes técnicos
+
+- **Interface visual**: usa Tkinter, que já vem junto com o Python no instalador oficial do
+  Windows — não precisa instalar nada a mais. Se por algum motivo faltar, rode com
+  `--sem-interface`.
+- **Banco de dados**: um arquivo SQLite em `dados/jarvis.db` (criado automaticamente),
+  guardando memórias, lembretes, rotinas e histórico. Não vai pro Git (está no
+  `.gitignore`) — é local da sua máquina.
+- **Rotinas** não gravam uma macro fixa de cliques: guardam uma descrição em texto dos passos,
+  e o Jarvis decide como executar cada um (usando as ferramentas disponíveis) toda vez que a
+  rotina é chamada.

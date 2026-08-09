@@ -4,9 +4,12 @@ import datetime
 from anthropic import Anthropic
 
 from . import config
+from . import historico as historico_registro
 from .arquivos import TOOLS as FERRAMENTAS_ARQUIVOS
+from .historico import TOOLS as FERRAMENTAS_HISTORICO
 from .lembretes import TOOLS as FERRAMENTAS_LEMBRETES
 from .memoria import TOOLS as FERRAMENTAS_MEMORIA
+from .rotinas import TOOLS as FERRAMENTAS_ROTINAS
 from .sistema import TOOLS as FERRAMENTAS_SISTEMA
 from .tools import TOOLS as FERRAMENTAS_PC
 
@@ -18,6 +21,8 @@ FERRAMENTAS = [
     *FERRAMENTAS_SISTEMA,
     *FERRAMENTAS_MEMORIA,
     *FERRAMENTAS_LEMBRETES,
+    *FERRAMENTAS_ROTINAS,
+    *FERRAMENTAS_HISTORICO,
     {"type": "web_search_20260209", "name": "web_search"},
 ]
 
@@ -27,9 +32,12 @@ educadamente, fazer perguntas de volta, comentar o que o usuário traz, brincar,
 sobre qualquer assunto, não só sobre o PC.
 
 Quando o pedido for uma tarefa (abrir programa, rodar comando, gerenciar arquivos, checar o
-sistema, controlar dispositivos, pesquisar na internet), use as ferramentas disponíveis e
-confirme o que fez de forma direta e breve. Pesquise na internet quando a resposta depender de
-informação atual (preços, notícias, algo que você não tem certeza) em vez de chutar.
+sistema, controlar dispositivos, pesquisar na internet, executar uma rotina salva), use as
+ferramentas disponíveis e confirme o que fez de forma direta e breve. Pesquise na internet
+quando a resposta depender de informação atual (preços, notícias, algo que você não tem
+certeza) em vez de chutar. Quando o usuário pedir pra fazer várias coisas de uma vez (ex:
+"prepara meu PC pra trabalhar"), pode ser uma rotina salva — confira com executar_rotina antes
+de perguntar os passos manualmente, e se não existir, sugira criar uma.
 
 Quando o usuário contar algo sobre si que pareça útil lembrar depois (preferências, projetos,
 rotina, nomes), guarde com a ferramenta de memória sem precisar que ele peça.
@@ -70,4 +78,9 @@ def perguntar(historico: list[dict], texto_usuario: str) -> tuple[str, list[dict
         bloco.text for bloco in ultima_mensagem.content if bloco.type == "text"
     ).strip()
     historico = historico + [{"role": "assistant", "content": ultima_mensagem.content}]
+
+    historico_registro.registrar(
+        datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), texto_usuario, resposta_texto
+    )
+
     return resposta_texto, historico
