@@ -5,11 +5,18 @@ Claude (Anthropic) como "cérebro".
 
 ## O que ele já faz
 
-- **Conversa** por texto ou por voz (fala em português) — no modo voz, você **bate palma**
-  para chamar o Jarvis, ele toca um bipe e já escuta seu comando.
-- **Abre e fecha programas** (`abrir_programa`, `fechar_programa`).
-- **Executa comandos** no terminal do Windows (`executar_comando`).
-- **Lista processos** em execução (`listar_processos`).
+- **Conversa de verdade** por texto ou por voz (fala em português) — não só executa comando,
+  também opina, pergunta, brinca e troca ideia sobre qualquer assunto. No modo voz, você
+  **bate palma** para chamar o Jarvis, ele toca um bipe e já escuta seu comando.
+- **Abre e fecha programas** (`abrir_programa`, `fechar_programa`) e **executa comandos** no
+  terminal do Windows.
+- **Gerencia arquivos e pastas**: cria, lê, renomeia, move, copia, apaga e procura arquivos.
+- **Pesquisa na internet** quando a resposta depender de informação atual.
+- **Monitora o sistema**: uso de CPU, RAM, disco e GPU (placas NVIDIA).
+- **Lembra de você**: guarda preferências e informações que você conta, e você pode perguntar
+  "o que você lembra sobre mim" ou pedir pra esquecer algo.
+- **Guarda lembretes** numa lista que você consulta quando quiser (não avisa sozinho na hora
+  certa ainda).
 - **Controla dispositivos inteligentes** (luzes, tomadas, etc.) via
   [Home Assistant](https://www.home-assistant.io/) — opcional.
 
@@ -136,4 +143,5 @@ para comandos simples).
 ## Próximos passos possíveis
 
 - Palavra de ativação por voz ("Jarvis, ...") além da palma.
-- Mais ferramentas: controle de volume, brilho, buscas na web, agenda, etc.
+- Lembretes que avisam sozinhos na hora certa (hoje é só uma lista consultável).
+- Mais ferramentas: controle de volume, brilho, agenda, etc.
