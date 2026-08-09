@@ -93,8 +93,25 @@ python -m jarvis.calibrar
   acessem seu microfone" está ativado, e em **Configurações → Sistema → Som → Entrada** se o
   dispositivo certo está selecionado.
 - Se o número **se mexer mas a palma ainda não é detectada**, ajuste no `.env`:
-  `JARVIS_MULTIPLICADOR_PALMA` (padrão 4) — diminua para 2 ou 3 se as palmas continuarem
-  ignoradas, ou aumente se ele disparar sozinho com barulho do ambiente.
+  `JARVIS_MULTIPLICADOR_PALMA` (padrão 2) — diminua se as palmas continuarem ignoradas, ou
+  aumente se ele disparar sozinho com barulho do ambiente.
+
+## Rodando sem precisar abrir terminal
+
+Dê **duplo clique** em `iniciar_jarvis.vbs` (na pasta `jarvis/`) — ele liga o Jarvis em modo
+voz em segundo plano, sem nenhuma janela aparecendo. É só bater palma normalmente depois.
+
+Para **encerrar**, abra o Gerenciador de Tarefas (Ctrl+Shift+Esc), procure por `pythonw.exe`
+na lista de processos e clique em "Finalizar tarefa".
+
+### Ligar automaticamente com o Windows
+
+1. Aperta **Win+R**, digita `shell:startup` e aperta Enter (abre a pasta de Inicialização).
+2. Copia o arquivo `iniciar_jarvis.vbs` pra dentro dessa pasta (pode ser cópia, ou um atalho
+   dele — os dois funcionam).
+
+Pronto — toda vez que você ligar o PC e entrar no Windows, o Jarvis já vai estar rodando em
+segundo plano, esperando você bater palma.
 
 ## Controlando dispositivos inteligentes (opcional)
 
@@ -119,5 +136,4 @@ para comandos simples).
 ## Próximos passos possíveis
 
 - Palavra de ativação por voz ("Jarvis, ...") além da palma.
-- Rodar como serviço/inicializar com o Windows.
 - Mais ferramentas: controle de volume, brilho, buscas na web, agenda, etc.
