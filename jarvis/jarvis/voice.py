@@ -79,7 +79,10 @@ def ouvir() -> str | None:
             # consegue entender. Um piso mínimo evita isso.
             if _reconhecedor.energy_threshold < 300:
                 _reconhecedor.energy_threshold = 300
-            audio = _reconhecedor.listen(fonte, phrase_time_limit=10)
+            # Tempo de silêncio para considerar que a frase terminou (padrão é 0.8s, curto
+            # demais — cortava no meio se a pessoa pausasse um instante pra pensar).
+            _reconhecedor.pause_threshold = 1.5
+            audio = _reconhecedor.listen(fonte, phrase_time_limit=15)
 
     try:
         texto = _reconhecedor.recognize_google(audio, language="pt-BR")
