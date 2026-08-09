@@ -6,13 +6,18 @@ Uso (a partir da pasta jarvis/):
 """
 import argparse
 
-from . import config
+from . import avisos, config
 from .client import perguntar
+
+
+def _anunciar_no_texto(texto: str) -> None:
+    print(f"\n🔔 Lembrete: {texto}")
 
 
 def modo_texto() -> None:
     print("Jarvis (modo texto). Digite 'sair' para encerrar.\n")
     historico: list[dict] = []
+    avisos.iniciar(_anunciar_no_texto)
     while True:
         texto_usuario = input("Você: ").strip()
         if texto_usuario.lower() in ("sair", "exit", "quit"):
@@ -28,6 +33,7 @@ def modo_voz() -> None:
 
     print("Jarvis (modo voz). Bata palma para chamar. Pressione Ctrl+C para encerrar.\n")
     historico: list[dict] = []
+    avisos.iniciar(lambda texto: voice.falar(f"Lembrete: {texto}"))
     voice.falar("Jarvis ligado. Bata palma para me chamar.")
     while True:
         try:

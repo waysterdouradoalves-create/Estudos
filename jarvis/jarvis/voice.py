@@ -1,4 +1,6 @@
 """Entrada e saída de voz do Jarvis (reconhecimento de fala, texto-para-fala e palma)."""
+import threading
+
 import pyaudio
 import speech_recognition as sr
 import pyttsx3
@@ -18,6 +20,7 @@ from . import config
 _reconhecedor = sr.Recognizer()
 _motor_voz = pyttsx3.init()
 _motor_voz.setProperty("rate", 175)
+_trava_voz = threading.Lock()  # evita que duas falas (ex: resposta + lembrete) se sobreponham
 
 
 def _medir_ruido_ambiente(fluxo, chunk: int = 1024, amostras: int = 20) -> float:
@@ -84,6 +87,7 @@ def ouvir() -> str | None:
 
 def falar(texto: str) -> None:
     """Fala o texto em voz alta."""
-    print(f"Jarvis: {texto}")
-    _motor_voz.say(texto)
-    _motor_voz.runAndWait()
+    with _trava_voz:
+        print(f"Jarvis: {texto}")
+        _motor_voz.say(texto)
+        _motor_voz.runAndWait()
