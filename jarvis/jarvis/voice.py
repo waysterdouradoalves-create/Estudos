@@ -47,8 +47,14 @@ def esperar_palma() -> None:
             volume = audioop.rms(dados, 2)
             print(f"\rnível: {volume:5d} / limiar: {limiar:.0f}".ljust(40), end="", flush=True)
             if volume > limiar:
-                print("  <- PALMA DETECTADA")
-                return
+                # Confirma que é um pico curto (palma) e não barulho contínuo (conversa,
+                # TV, música): checa se o volume já caiu de novo logo em seguida.
+                dados2 = fluxo.read(1024, exception_on_overflow=False)
+                volume2 = audioop.rms(dados2, 2)
+                if volume2 < limiar:
+                    print("  <- PALMA DETECTADA")
+                    return
+                print("  (som alto contínuo, ignorando)")
     finally:
         fluxo.stop_stream()
         fluxo.close()
