@@ -18,9 +18,10 @@ except ImportError:  # Python 3.13+ removeu o módulo audioop da biblioteca padr
 from . import config
 
 _reconhecedor = sr.Recognizer()
-_motor_voz = pyttsx3.init()
-_motor_voz.setProperty("rate", 175)
-_trava_voz = threading.Lock()  # evita que duas falas (ex: resposta + lembrete) se sobreponham
+# Trava compartilhada entre ouvir() e falar(): evita que um lembrete fale por cima
+# enquanto o usuário está sendo gravado (a voz vazaria pro microfone e atrapalharia o
+# reconhecimento), e também que duas falas se sobreponham.
+_trava_audio = threading.Lock()
 
 
 def _medir_ruido_ambiente(fluxo, chunk: int = 1024, amostras: int = 20) -> float:
@@ -62,16 +63,17 @@ def bipe() -> None:
 
 def ouvir() -> str | None:
     """Escuta o microfone e retorna o texto reconhecido (ou None se não entendeu)."""
-    with sr.Microphone() as fonte:
-        print("Ouvindo...")
-        _reconhecedor.adjust_for_ambient_noise(fonte, duration=0.5)
-        # Em ambientes muito silenciosos, a calibração automática deixa o reconhecedor
-        # sensível demais e ele capta qualquer ruidinho (não a fala) como "início da
-        # frase" — o que resulta em áudio vazio/curto que o Google não consegue entender.
-        # Um piso mínimo evita isso.
-        if _reconhecedor.energy_threshold < 300:
-            _reconhecedor.energy_threshold = 300
-        audio = _reconhecedor.listen(fonte, phrase_time_limit=10)
+    with _trava_audio:
+        with sr.Microphone() as fonte:
+            print("Ouvindo...")
+            _reconhecedor.adjust_for_ambient_noise(fonte, duration=0.5)
+            # Em ambientes muito silenciosos, a calibração automática deixa o
+            # reconhecedor sensível demais e ele capta qualquer ruidinho (não a fala)
+            # como "início da frase" — resultando em áudio vazio/curto que o Google não
+            # consegue entender. Um piso mínimo evita isso.
+            if _reconhecedor.energy_threshold < 300:
+                _reconhecedor.energy_threshold = 300
+            audio = _reconhecedor.listen(fonte, phrase_time_limit=10)
 
     try:
         texto = _reconhecedor.recognize_google(audio, language="pt-BR")
@@ -86,8 +88,16 @@ def ouvir() -> str | None:
 
 
 def falar(texto: str) -> None:
-    """Fala o texto em voz alta."""
-    with _trava_voz:
+    """Fala o texto em voz alta.
+
+    Cria um motor de voz novo a cada chamada: o pyttsx3/SAPI5 no Windows só funciona de
+    forma confiável na mesma thread em que foi criado, e falar() pode ser chamada tanto
+    da thread principal quanto da thread de verificação de lembretes.
+    """
+    with _trava_audio:
         print(f"Jarvis: {texto}")
-        _motor_voz.say(texto)
-        _motor_voz.runAndWait()
+        motor = pyttsx3.init()
+        motor.setProperty("rate", 175)
+        motor.say(texto)
+        motor.runAndWait()
+        motor.stop()
