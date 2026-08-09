@@ -62,7 +62,13 @@ def ouvir() -> str | None:
     with sr.Microphone() as fonte:
         print("Ouvindo...")
         _reconhecedor.adjust_for_ambient_noise(fonte, duration=0.5)
-        audio = _reconhecedor.listen(fonte)
+        # Em ambientes muito silenciosos, a calibração automática deixa o reconhecedor
+        # sensível demais e ele capta qualquer ruidinho (não a fala) como "início da
+        # frase" — o que resulta em áudio vazio/curto que o Google não consegue entender.
+        # Um piso mínimo evita isso.
+        if _reconhecedor.energy_threshold < 300:
+            _reconhecedor.energy_threshold = 300
+        audio = _reconhecedor.listen(fonte, phrase_time_limit=10)
 
     try:
         texto = _reconhecedor.recognize_google(audio, language="pt-BR")
