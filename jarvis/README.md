@@ -79,6 +79,23 @@ do ambiente), ajuste `JARVIS_LIMIAR_PALMA` no `.env` (menor = mais sensível).
 
 Diga "sair" (texto) ou "sair"/"tchau" (voz) para encerrar.
 
+### A palma não está sendo detectada?
+
+Rode a ferramenta de calibração, que mostra o volume captado pelo microfone em tempo real:
+
+```bat
+python -m jarvis.calibrar
+```
+
+- Se o número **nunca se mexer** (fica sempre perto de 0), o problema não é sensibilidade —
+  é o Windows bloqueando o acesso ao microfone, ou o microfone errado selecionado como padrão.
+  Confira em **Configurações → Privacidade e segurança → Microfone** se "Permitir que os apps
+  acessem seu microfone" está ativado, e em **Configurações → Sistema → Som → Entrada** se o
+  dispositivo certo está selecionado.
+- Se o número **se mexer**, anote o valor mais alto que aparece quando você bate palma, e
+  coloque um pouco abaixo disso em `JARVIS_LIMIAR_PALMA` no `.env` (ex: se a palma bate uns
+  8000, use 5000 ou 6000).
+
 ## Controlando dispositivos inteligentes (opcional)
 
 Se você tem um [Home Assistant](https://www.home-assistant.io/) rodando na sua rede, preencha
