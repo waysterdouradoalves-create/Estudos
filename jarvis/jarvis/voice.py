@@ -41,10 +41,13 @@ def esperar_palma() -> None:
     try:
         ruido_ambiente = _medir_ruido_ambiente(fluxo)
         limiar = max(ruido_ambiente * config.MULTIPLICADOR_PALMA, config.LIMIAR_PALMA_MINIMO)
+        print(f"(ruído ambiente: {ruido_ambiente:.0f} | limiar da palma: {limiar:.0f})")
         while True:
             dados = fluxo.read(1024, exception_on_overflow=False)
             volume = audioop.rms(dados, 2)
+            print(f"\rnível: {volume:5d} / limiar: {limiar:.0f}".ljust(40), end="", flush=True)
             if volume > limiar:
+                print("  <- PALMA DETECTADA")
                 return
     finally:
         fluxo.stop_stream()
