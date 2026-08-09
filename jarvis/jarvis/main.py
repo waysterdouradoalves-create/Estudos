@@ -30,16 +30,22 @@ def modo_texto() -> None:
         print(f"Jarvis: {resposta}\n")
 
 
+def _saudacao() -> str:
+    if config.NOME_USUARIO:
+        return f"Olá, senhor {config.NOME_USUARIO}! Em que vamos trabalhar hoje?"
+    return "Olá! Em que posso ajudar?"
+
+
 def modo_voz(estado=None) -> None:
     from . import voice
 
     print("Jarvis (modo voz). Bata palma para chamar. Pressione Ctrl+C para encerrar.\n")
     historico: list[dict] = []
     avisos.iniciar(lambda texto: voice.falar(f"Lembrete: {texto}"))
+    primeira_palma = True
 
     if estado:
         estado.definir_status("online")
-    voice.falar("Jarvis ligado. Bata palma para me chamar.")
 
     while True:
         try:
@@ -47,7 +53,14 @@ def modo_voz(estado=None) -> None:
             if estado:
                 estado.definir_status("aguardando")
             voice.esperar_palma()
-            voice.bipe()
+
+            if primeira_palma:
+                primeira_palma = False
+                if estado:
+                    estado.definir_status("falando")
+                voice.falar(_saudacao())
+            else:
+                voice.bipe()
 
             if estado:
                 estado.definir_status("ouvindo")
