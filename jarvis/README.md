@@ -96,7 +96,19 @@ No modo voz, **bata palma** para chamar o Jarvis — ele toca um bipe curto e j�
 comando. A detecção se ajusta sozinha ao barulho do ambiente (mede o ruído de fundo por um
 instante antes de esperar a palma), então normalmente não precisa configurar nada. Uma janela
 visual e o painel web (`http://localhost:5000`, abre sozinho no navegador) sobem junto — para
-rodar sem eles, use `--sem-interface` e/ou `--sem-painel`.
+rodar sem eles, use `--sem-interface` e/ou `--sem-painel`. No painel também dá pra ativar a
+escuta na hora clicando em "Ativar agora" no reator central, sem precisar bater palma.
+
+### Instalando o painel como um app (não só uma aba do navegador)
+
+O painel é um PWA (Progressive Web App) — dá pra instalar como um aplicativo de verdade no
+Windows, com ícone próprio e janela sem barra de endereço, em vez de ficar preso numa aba:
+
+1. Abra `http://localhost:5000` no Edge (ou Chrome).
+2. Clique no ícone de instalar que aparece na barra de endereço (um monitorzinho com seta pra
+   baixo) — ou vá em **⋯ (menu) → Aplicativos → Instalar este site como um aplicativo**.
+3. Pronto — o Jarvis aparece no Menu Iniciar e na Área de Trabalho como um app separado, com
+   ícone próprio, sem abas nem barra de endereço.
 
 Diga "sair" (texto) ou "sair"/"tchau" (voz) para encerrar.
 

@@ -1,15 +1,56 @@
 """Painel de controle do Jarvis: site local (Flask) com dashboard, chat, memória,
 lembretes, rotinas e histórico — tudo pelo navegador, sem precisar de terminal."""
 import os
+import struct
 import threading
 import webbrowser
+import zlib
 from datetime import datetime
 
-from flask import Flask, jsonify, render_template_string, request
+from flask import Flask, Response, jsonify, render_template_string, request
 
 from . import banco
 
 PORTA = 5000
+
+_CACHE_ICONES: dict[int, bytes] = {}
+
+
+def _gerar_icone_png(tamanho: int) -> bytes:
+    """Desenha o ícone do app (reator central) direto em PNG, sem depender de Pillow."""
+    cor_fundo = (3, 5, 9)
+    cor_anel = (47, 212, 255)
+    cor_nucleo = (255, 255, 255)
+    centro = tamanho / 2
+    raio_anel = tamanho * 0.34
+    espessura = tamanho * 0.045
+    raio_nucleo = tamanho * 0.09
+
+    linhas = bytearray()
+    for y in range(tamanho):
+        linhas.append(0)  # sem filtro nesta linha
+        for x in range(tamanho):
+            dist = ((x - centro) ** 2 + (y - centro) ** 2) ** 0.5
+            if dist <= raio_nucleo:
+                cor = cor_nucleo
+            elif raio_anel - espessura <= dist <= raio_anel + espessura:
+                cor = cor_anel
+            else:
+                cor = cor_fundo
+            linhas += bytes((*cor, 255))
+
+    def _chunk(tipo: bytes, dados: bytes) -> bytes:
+        return struct.pack(">I", len(dados)) + tipo + dados + struct.pack(">I", zlib.crc32(tipo + dados))
+
+    ihdr = struct.pack(">IIBBBBB", tamanho, tamanho, 8, 6, 0, 0, 0)
+    idat = zlib.compress(bytes(linhas), 9)
+    return b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", idat) + _chunk(b"IEND", b"")
+
+
+def _icone(tamanho: int) -> bytes:
+    if tamanho not in _CACHE_ICONES:
+        _CACHE_ICONES[tamanho] = _gerar_icone_png(tamanho)
+    return _CACHE_ICONES[tamanho]
 
 _PAGINA = r"""
 <!doctype html>
@@ -18,6 +59,9 @@ _PAGINA = r"""
 <meta charset="utf-8">
 <title>JARVIS · Painel de Controle</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icone-192.png">
+<meta name="theme-color" content="#030509">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -579,6 +623,11 @@ document.getElementById('btn-parar').addEventListener('click', async () => {
   document.body.innerHTML = '<div style="padding:60px;font-family:Orbitron,sans-serif;color:#7c8aa8;font-size:18px;letter-spacing:1px">Jarvis encerrado. Pode fechar esta aba.</div>';
 });
 
+// ---------- App instalável (PWA) ----------
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => { /* segue sem PWA */ });
+}
+
 // ---------- Inicialização ----------
 atualizarStatus();
 atualizarMemoria();
@@ -604,6 +653,32 @@ def criar_app(estado=None) -> Flask:
     @app.route("/")
     def pagina_principal():
         return render_template_string(_PAGINA)
+
+    # ---------- App instalável (PWA) ----------
+    @app.route("/manifest.json")
+    def manifest():
+        return jsonify(
+            {
+                "name": "JARVIS",
+                "short_name": "Jarvis",
+                "start_url": "/",
+                "display": "standalone",
+                "background_color": "#030509",
+                "theme_color": "#030509",
+                "icons": [
+                    {"src": "/icone-192.png", "sizes": "192x192", "type": "image/png"},
+                    {"src": "/icone-512.png", "sizes": "512x512", "type": "image/png"},
+                ],
+            }
+        )
+
+    @app.route("/sw.js")
+    def service_worker():
+        return Response("self.addEventListener('fetch', () => {});", mimetype="application/javascript")
+
+    @app.route("/icone-<int:tamanho>.png")
+    def icone(tamanho):
+        return Response(_icone(tamanho), mimetype="image/png")
 
     # ---------- Status ----------
     @app.route("/api/status")
