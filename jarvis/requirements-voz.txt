@@ -2,3 +2,4 @@ SpeechRecognition
 pyttsx3
 pyaudio
 audioop-lts; python_version >= "3.13"
+flask

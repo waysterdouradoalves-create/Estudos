@@ -21,6 +21,8 @@ Claude (Anthropic) como "cérebro".
   execute tudo de uma vez depois com um comando curto.
 - **Interface visual**: uma janela mostra o status (ligando/ouvindo/pensando/falando), uso de
   CPU/RAM em tempo real, o último comando e o relógio.
+- **Painel de controle web**: um site local (`http://localhost:5000`) com status ao vivo,
+  CPU/RAM, lembretes pendentes e um chat pra conversar por texto pelo navegador.
 - **Guarda tudo num banco de dados local** (SQLite) — memórias, lembretes, rotinas e histórico
   de conversas, incluindo a ferramenta "mostra meu histórico de comandos".
 - **Controla dispositivos inteligentes** (luzes, tomadas, etc.) via
@@ -89,8 +91,8 @@ python -m jarvis.main --modo voz
 No modo voz, **bata palma** para chamar o Jarvis — ele toca um bipe curto e já escuta o
 comando. A detecção se ajusta sozinha ao barulho do ambiente (mede o ruído de fundo por um
 instante antes de esperar a palma), então normalmente não precisa configurar nada. Uma janela
-visual abre junto mostrando o status e uso do sistema — para rodar sem ela, use
-`python -m jarvis.main --modo voz --sem-interface`.
+visual e o painel web (`http://localhost:5000`, abre sozinho no navegador) sobem junto — para
+rodar sem eles, use `--sem-interface` e/ou `--sem-painel`.
 
 Diga "sair" (texto) ou "sair"/"tchau" (voz) para encerrar.
 
@@ -159,6 +161,9 @@ para comandos simples).
 - **Interface visual**: usa Tkinter, que já vem junto com o Python no instalador oficial do
   Windows — não precisa instalar nada a mais. Se por algum motivo faltar, rode com
   `--sem-interface`.
+- **Painel web**: um servidor Flask local (só acessível do seu próprio PC, em
+  `localhost:5000`) — não expõe nada pra internet. É a mesma aplicação Python do Jarvis, sem
+  serviço separado pra instalar ou manter.
 - **Banco de dados**: um arquivo SQLite em `dados/jarvis.db` (criado automaticamente),
   guardando memórias, lembretes, rotinas e histórico. Não vai pro Git (está no
   `.gitignore`) — é local da sua máquina.
