@@ -24,9 +24,9 @@ _PAGINA = r"""
 <style>
   :root {
     color-scheme: dark;
-    --bg: #050810; --panel: rgba(15, 22, 38, 0.62); --border: rgba(110, 231, 255, 0.14);
-    --border-forte: rgba(110, 231, 255, 0.4); --acento: #22d3ee; --acento-2: #7c5cff;
-    --texto: #e8eefc; --texto-fraco: #7c8aa8; --sucesso: #1fe0a0; --aviso: #ffb020; --perigo: #ff4d6d;
+    --bg: #030509; --panel: rgba(10, 15, 26, 0.66); --border: rgba(120, 200, 255, 0.14);
+    --border-forte: rgba(120, 200, 255, 0.45); --acento: #2fd4ff; --acento-2: #4f7dff;
+    --texto: #eaf2ff; --texto-fraco: #7688a6; --sucesso: #1fe0a0; --aviso: #ffb020; --perigo: #ff4d6d;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -109,11 +109,13 @@ _PAGINA = r"""
   }
   h1.titulo::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-forte), transparent); }
 
-  /* ---------- Status hero ---------- */
+  /* ---------- Status hero: reator central ---------- */
   .status-hero {
-    display: flex; align-items: center; gap: 22px; background: var(--panel);
+    display: flex; align-items: center; gap: 48px; background:
+      radial-gradient(circle at 15% 50%, rgba(47,212,255,0.07), transparent 55%), var(--panel);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); position: relative; overflow: hidden;
-    border: 1px solid var(--border); border-radius: 16px; padding: 22px 26px; margin-bottom: 24px;
+    border: 1px solid var(--border); border-radius: 20px; padding: 46px 50px; margin-bottom: 24px;
+    min-height: 220px;
   }
   .status-hero::before {
     content: ''; position: absolute; top: 0; left: -30%; width: 30%; height: 2px;
@@ -122,34 +124,49 @@ _PAGINA = r"""
   }
   @keyframes varrer { from { left: -30%; } to { left: 100%; } }
 
-  /* Núcleo estilo "arc reactor": anel girando + centro pulsante */
+  /* Núcleo estilo "arc reactor": anéis concêntricos girando + centro pulsante */
   .ponto {
-    width: 54px; height: 54px; border-radius: 50%; flex-shrink: 0; position: relative;
+    width: 130px; height: 130px; border-radius: 50%; flex-shrink: 0; position: relative;
     display: flex; align-items: center; justify-content: center;
   }
+  .anel-extra { position: absolute; border-radius: 50%; border: 1px dashed currentColor; pointer-events: none; }
+  .anel-extra.a1 { inset: -16px; opacity: .28; animation: girar 7s linear infinite reverse; }
+  .anel-extra.a2 { inset: -34px; opacity: .14; animation: girar 12s linear infinite; border-style: solid; border-width: 1px; }
   .ponto::before {
     content: ''; position: absolute; inset: 0; border-radius: 50%;
     background: conic-gradient(currentColor 0deg, transparent 100deg, currentColor 180deg, transparent 280deg);
-    opacity: .6; animation: girar 3s linear infinite;
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    opacity: .7; animation: girar 3s linear infinite;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 7px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 7px));
   }
   @keyframes girar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .ponto::after {
-    content: ''; width: 16px; height: 16px; border-radius: 50%; background: currentColor; position: relative; z-index: 1;
-    box-shadow: 0 0 12px 3px currentColor, 0 0 26px 7px currentColor;
+    content: ''; width: 34px; height: 34px; border-radius: 50%; background: currentColor; position: relative; z-index: 1;
+    box-shadow: 0 0 22px 6px currentColor, 0 0 50px 16px currentColor;
   }
   .ponto.pulsar::after { animation: respirar 1.8s ease-in-out infinite; }
   @keyframes respirar {
-    0%, 100% { box-shadow: 0 0 12px 3px currentColor, 0 0 26px 7px currentColor; }
-    50% { box-shadow: 0 0 18px 5px currentColor, 0 0 40px 12px currentColor; }
+    0%, 100% { box-shadow: 0 0 22px 6px currentColor, 0 0 50px 16px currentColor; }
+    50% { box-shadow: 0 0 30px 9px currentColor, 0 0 68px 22px currentColor; }
   }
-  .status-hero .texto { font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
-  .status-hero .sub { font-size: 13px; color: var(--texto-fraco); margin-top: 3px; }
+  .status-hero-info { position: relative; z-index: 1; }
+  .status-hero .texto {
+    font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  }
+  .status-hero .sub { font-size: 14px; color: var(--texto-fraco); margin-top: 6px; letter-spacing: .5px; }
   .cor-online, .cor-aguardando { color: var(--sucesso); }
   .cor-ouvindo, .cor-pensando { color: var(--aviso); }
   .cor-falando { color: var(--acento-2); }
   .cor-ligando { color: var(--acento); }
+
+  .botao-ativar {
+    margin-top: 18px; background: linear-gradient(135deg, var(--acento), var(--acento-2)); color: #04101a;
+    border: none; border-radius: 999px; padding: 12px 26px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; font-size: 12px; cursor: pointer; font-family: 'Rajdhani', inherit;
+    box-shadow: 0 0 20px rgba(47,212,255,.35); transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .botao-ativar:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(47,212,255,.55); }
+  .botao-ativar:disabled { opacity: .45; cursor: default; transform: none; }
 
   /* ---------- Cards / grade ---------- */
   .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-bottom: 24px; }
@@ -266,10 +283,14 @@ _PAGINA = r"""
   <section class="secao ativa" id="secao-dashboard">
     <h1 class="titulo">Dashboard</h1>
     <div class="status-hero cor-ligando" id="status-hero">
-      <div class="ponto pulsar" id="status-ponto"></div>
-      <div>
+      <div class="ponto pulsar" id="status-ponto">
+        <span class="anel-extra a1"></span>
+        <span class="anel-extra a2"></span>
+      </div>
+      <div class="status-hero-info">
         <div class="texto" id="status-texto">Carregando...</div>
         <div class="sub">Modelo: claude-sonnet-5</div>
+        <button type="button" id="btn-ativar" class="botao-ativar">🎙️ Ativar agora</button>
       </div>
     </div>
     <div class="grade">
@@ -542,6 +563,15 @@ document.getElementById('chat-form').addEventListener('submit', async (ev) => {
   atualizarHistorico();
 });
 
+// ---------- Ativar manualmente (sem bater palma) ----------
+const btnAtivar = document.getElementById('btn-ativar');
+btnAtivar.addEventListener('click', async () => {
+  btnAtivar.disabled = true;
+  btnAtivar.textContent = 'Ativando...';
+  try { await fetch('/api/ativar', { method: 'POST' }); } catch (e) { /* ignora */ }
+  setTimeout(() => { btnAtivar.disabled = false; btnAtivar.textContent = '🎙️ Ativar agora'; }, 2500);
+});
+
 // ---------- Encerrar ----------
 document.getElementById('btn-parar').addEventListener('click', async () => {
   if (!confirm('Tem certeza que quer encerrar o Jarvis?')) return;
@@ -694,6 +724,14 @@ def criar_app(estado=None) -> Flask:
         nonlocal historico_web
         resposta, historico_web = perguntar(historico_web, f"executa a rotina {nome}")
         return jsonify(resposta=resposta)
+
+    # ---------- Ativação manual ----------
+    @app.route("/api/ativar", methods=["POST"])
+    def api_ativar():
+        from . import voice
+
+        voice.evento_ativacao_manual.set()
+        return jsonify(ok=True)
 
     # ---------- Encerrar ----------
     @app.route("/api/parar", methods=["POST"])

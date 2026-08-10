@@ -22,6 +22,9 @@ _reconhecedor = sr.Recognizer()
 # enquanto o usuário está sendo gravado (a voz vazaria pro microfone e atrapalharia o
 # reconhecimento), e também que duas falas se sobreponham.
 _trava_audio = threading.Lock()
+# Permite ativar a escuta pelo painel web, sem precisar bater palma: o botão "Ativar
+# agora" seta este evento, e esperar_palma() o observa a cada volta do laço.
+evento_ativacao_manual = threading.Event()
 
 
 def _medir_ruido_ambiente(fluxo, chunk: int = 1024, amostras: int = 20) -> float:
@@ -43,6 +46,10 @@ def esperar_palma() -> None:
         limiar = max(ruido_ambiente * config.MULTIPLICADOR_PALMA, config.LIMIAR_PALMA_MINIMO)
         print(f"(ruído ambiente: {ruido_ambiente:.0f} | limiar da palma: {limiar:.0f})")
         while True:
+            if evento_ativacao_manual.is_set():
+                evento_ativacao_manual.clear()
+                print("Ativado pelo painel web.")
+                return
             dados = fluxo.read(1024, exception_on_overflow=False)
             volume = audioop.rms(dados, 2)
             print(f"\rnível: {volume:5d} / limiar: {limiar:.0f}".ljust(40), end="", flush=True)
