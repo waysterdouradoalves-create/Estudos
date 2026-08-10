@@ -21,8 +21,12 @@ Claude (Anthropic) como "cérebro".
   execute tudo de uma vez depois com um comando curto.
 - **Interface visual**: uma janela mostra o status (ligando/ouvindo/pensando/falando), uso de
   CPU/RAM em tempo real, o último comando e o relógio.
-- **Painel de controle web**: um site local (`http://localhost:5000`) com status ao vivo,
-  CPU/RAM, lembretes pendentes e um chat pra conversar por texto pelo navegador.
+- **Painel de controle web**: um site local (`http://localhost:5000`), com visual
+  profissional (tema escuro, navegação lateral) e várias páginas: **Dashboard** (status ao
+  vivo, CPU/RAM, contadores de comandos/lembretes/rotinas), **Chat** (conversar por texto
+  pelo navegador), **Memória** (ver e apagar o que o Jarvis lembra de você), **Lembretes**
+  (criar, ver e remover), **Rotinas** (criar, executar e remover) e **Histórico** (últimas
+  conversas registradas).
 - **Guarda tudo num banco de dados local** (SQLite) — memórias, lembretes, rotinas e histórico
   de conversas, incluindo a ferramenta "mostra meu histórico de comandos".
 - **Controla dispositivos inteligentes** (luzes, tomadas, etc.) via
