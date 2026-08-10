@@ -111,16 +111,39 @@ _PAGINA = r"""
 
   /* ---------- Status hero ---------- */
   .status-hero {
-    display: flex; align-items: center; gap: 18px; background: var(--panel);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    display: flex; align-items: center; gap: 22px; background: var(--panel);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); position: relative; overflow: hidden;
     border: 1px solid var(--border); border-radius: 16px; padding: 22px 26px; margin-bottom: 24px;
   }
-  .ponto { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; background: currentColor; position: relative; box-shadow: 0 0 10px 2px currentColor; }
-  .ponto.pulsar::after {
-    content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid currentColor; opacity: .6;
-    animation: anel 1.6s ease-out infinite;
+  .status-hero::before {
+    content: ''; position: absolute; top: 0; left: -30%; width: 30%; height: 2px;
+    background: linear-gradient(90deg, transparent, currentColor, transparent); opacity: .5;
+    animation: varrer 3.2s linear infinite;
   }
-  @keyframes anel { 0% { transform: scale(.6); opacity: .8; } 100% { transform: scale(2.2); opacity: 0; } }
+  @keyframes varrer { from { left: -30%; } to { left: 100%; } }
+
+  /* Núcleo estilo "arc reactor": anel girando + centro pulsante */
+  .ponto {
+    width: 54px; height: 54px; border-radius: 50%; flex-shrink: 0; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ponto::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(currentColor 0deg, transparent 100deg, currentColor 180deg, transparent 280deg);
+    opacity: .6; animation: girar 3s linear infinite;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  }
+  @keyframes girar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .ponto::after {
+    content: ''; width: 16px; height: 16px; border-radius: 50%; background: currentColor; position: relative; z-index: 1;
+    box-shadow: 0 0 12px 3px currentColor, 0 0 26px 7px currentColor;
+  }
+  .ponto.pulsar::after { animation: respirar 1.8s ease-in-out infinite; }
+  @keyframes respirar {
+    0%, 100% { box-shadow: 0 0 12px 3px currentColor, 0 0 26px 7px currentColor; }
+    50% { box-shadow: 0 0 18px 5px currentColor, 0 0 40px 12px currentColor; }
+  }
   .status-hero .texto { font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
   .status-hero .sub { font-size: 13px; color: var(--texto-fraco); margin-top: 3px; }
   .cor-online, .cor-aguardando { color: var(--sucesso); }
@@ -132,10 +155,18 @@ _PAGINA = r"""
   .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-bottom: 24px; }
   .cartao {
     background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+    border: 1px solid var(--border); border-radius: 14px; padding: 20px; position: relative;
     transition: border-color .2s ease, transform .2s ease;
   }
+  /* Cantos estilo HUD/mira */
+  .cartao::before, .cartao::after {
+    content: ''; position: absolute; width: 14px; height: 14px; border: 2px solid var(--acento);
+    opacity: .3; transition: opacity .2s ease; pointer-events: none;
+  }
+  .cartao::before { top: -1px; left: -1px; border-right: none; border-bottom: none; border-radius: 6px 0 0 0; }
+  .cartao::after { bottom: -1px; right: -1px; border-left: none; border-top: none; border-radius: 0 0 6px 0; }
   .cartao:hover { border-color: var(--border-forte); transform: translateY(-2px); }
+  .cartao:hover::before, .cartao:hover::after { opacity: .9; }
   .cartao h2 {
     font-family: 'Orbitron', sans-serif; font-size: 11px; color: var(--acento); text-transform: uppercase;
     letter-spacing: 2px; margin: 0 0 16px; font-weight: 700;
@@ -147,9 +178,17 @@ _PAGINA = r"""
   }
   .estat-legenda { font-size: 12px; color: var(--texto-fraco); margin-top: 4px; letter-spacing: .5px; }
 
-  .barra-fundo { background: rgba(255,255,255,0.06); border-radius: 6px; height: 10px; overflow: hidden; margin-bottom: 12px; }
-  .barra { height: 100%; background: linear-gradient(90deg, var(--acento), var(--acento-2)); box-shadow: 0 0 10px rgba(34,211,238,.5); transition: width .5s ease; }
-  .barra-linha { display: flex; justify-content: space-between; font-size: 13px; color: var(--texto-fraco); margin-bottom: 6px; }
+  /* Medidor circular (CPU / RAM) */
+  .dial-cartao { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .dial {
+    --pct: 0; --cor: var(--acento); width: 92px; height: 92px; border-radius: 50%; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(var(--cor) calc(var(--pct) * 1%), rgba(255,255,255,0.07) 0);
+    box-shadow: 0 0 18px -4px var(--cor); transition: background .5s ease;
+  }
+  .dial::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: var(--bg); }
+  .dial-valor { position: relative; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 16px; z-index: 1; }
+  .dial.roxo { --cor: var(--acento-2); }
 
   /* ---------- Listas ---------- */
   .lista { list-style: none; padding: 0; margin: 0; }
@@ -234,15 +273,13 @@ _PAGINA = r"""
       </div>
     </div>
     <div class="grade">
-      <div class="cartao">
+      <div class="cartao dial-cartao">
         <h2>CPU</h2>
-        <div class="barra-linha"><span>Uso</span><span id="cpu-txt">-</span></div>
-        <div class="barra-fundo"><div class="barra" id="cpu-barra" style="width:0%"></div></div>
+        <div class="dial" id="cpu-dial"><span class="dial-valor" id="cpu-txt">-</span></div>
       </div>
-      <div class="cartao">
+      <div class="cartao dial-cartao">
         <h2>Memória RAM</h2>
-        <div class="barra-linha"><span>Uso</span><span id="ram-txt">-</span></div>
-        <div class="barra-fundo"><div class="barra" id="ram-barra" style="width:0%;background:#a78bfa"></div></div>
+        <div class="dial roxo" id="ram-dial"><span class="dial-valor" id="ram-txt">-</span></div>
       </div>
       <div class="cartao">
         <h2>Comandos hoje</h2>
@@ -355,9 +392,9 @@ async function atualizarStatus() {
     hero.className = 'status-hero cor-' + d.status;
     document.getElementById('status-texto').textContent = d.status.toUpperCase().replace('_', ' ');
     document.getElementById('cpu-txt').textContent = d.cpu.toFixed(0) + '%';
-    document.getElementById('cpu-barra').style.width = d.cpu + '%';
+    document.getElementById('cpu-dial').style.setProperty('--pct', d.cpu);
     document.getElementById('ram-txt').textContent = d.ram.toFixed(0) + '%';
-    document.getElementById('ram-barra').style.width = d.ram + '%';
+    document.getElementById('ram-dial').style.setProperty('--pct', d.ram);
     document.getElementById('stat-comandos').textContent = d.comandos_hoje;
     document.getElementById('stat-lembretes').textContent = d.lembretes_pendentes;
     document.getElementById('stat-rotinas').textContent = d.total_rotinas;
