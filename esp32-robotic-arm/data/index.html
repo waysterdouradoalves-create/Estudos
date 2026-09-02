@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Controle do Braço Robótico</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --panel: #161c2c;
+    --panel2: #1e2740;
+    --border: #2a3352;
+    --text: #e8ecf5;
+    --text2: #8b93ad;
+    --accent: #2f8fef;
+    --accent2: #4fd1ff;
+    --ok: #22c55e;
+    --bad: #ef4444;
+    --metal: #c7ccd6;
+    --metal-dark: #8890a0;
+    --joint: #2f8fef;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 1100px;
+    margin: 0 auto 16px;
+  }
+  h1 { font-size: 20px; font-weight: 700; }
+  h1 span { color: var(--accent2); }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text2);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--bad);
+    box-shadow: 0 0 8px var(--bad);
+    transition: background .2s, box-shadow .2s;
+  }
+  .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(260px, 380px) 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .panel h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text2);
+    margin-bottom: 12px;
+  }
+
+  /* ---- gêmeo visual do braço ---- */
+  .twin-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  #armSvg { width: 100%; max-width: 320px; height: auto; }
+  .compass-label { font-size: 12px; color: var(--text2); text-align: center; }
+
+  /* ---- controles das juntas ---- */
+  .joint {
+    margin-bottom: 16px;
+  }
+  .joint:last-child { margin-bottom: 0; }
+  .joint-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .joint-head b { font-weight: 600; }
+  .joint-head .val { color: var(--accent2); font-variant-numeric: tabular-nums; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--panel2);
+    outline: none;
+    border: 1px solid var(--border);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    cursor: pointer;
+  }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel2);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: border-color .15s, background .15s;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #05111f; }
+  button.primary:hover { background: var(--accent2); }
+  button.danger:hover { border-color: var(--bad); }
+
+  .speed-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .speed-row label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+
+  .seq-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 180px; overflow-y: auto; }
+  .seq-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--panel2); border: 1px solid var(--border);
+    padding: 8px 10px; border-radius: 8px; font-size: 13px;
+  }
+  .seq-item .seq-btns { display: flex; gap: 6px; }
+  .seq-item button { padding: 4px 10px; font-size: 12px; }
+
+  footer { max-width: 1100px; margin: 20px auto 0; font-size: 12px; color: var(--text2); text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Braço Robótico <span>ESP32</span></h1>
+  <div class="status"><span class="dot" id="dot"></span><span id="statusText">conectando...</span></div>
+</header>
+
+<div class="layout">
+
+  <div class="panel">
+    <h2>Visualização</h2>
+    <div class="twin-wrap">
+      <svg id="armSvg" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg">
+        <!-- chão -->
+        <ellipse cx="110" cy="238" rx="90" ry="10" fill="#000" opacity="0.25"/>
+
+        <!-- pedestal / base -->
+        <rect x="80" y="205" width="60" height="30" rx="8" fill="#3a4150" stroke="#22283a" stroke-width="2"/>
+        <ellipse cx="110" cy="205" rx="34" ry="10" fill="var(--joint)"/>
+        <ellipse cx="110" cy="205" rx="34" ry="10" fill="none" stroke="#1a5fa8" stroke-width="2"/>
+
+        <!-- cadeia cinemática (ombro -> cotovelo -> pulso -> garra) -->
+        <g id="shoulderGroup" transform="translate(110,196)">
+          <circle r="12" fill="var(--joint)" stroke="#1a5fa8" stroke-width="2"/>
+          <rect x="-8" y="-72" width="16" height="72" rx="7" fill="var(--metal)" stroke="var(--metal-dark)" stroke-width="1.5"/>
+
+          <g id="elbowGroup" transform="translate(0,-72)">
+            <circle r="10" fill="var(--joint)" stroke="#1a5fa8" stroke-width="2"/>
+            <rect x="-7" y="-60" width="14" height="60" rx="6" fill="var(--metal)" stroke="var(--metal-dark)" stroke-width="1.5"/>
+
+            <g id="wristGroup" transform="translate(0,-60)">
+              <circle r="8" fill="var(--joint)" stroke="#1a5fa8" stroke-width="2"/>
+              <!-- ícone de giro do pulso -->
+              <g id="rollIcon" transform="translate(14,-4)">
+                <circle r="6" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-dasharray="3 3"/>
+              </g>
+              <rect x="-5" y="-22" width="10" height="22" rx="4" fill="var(--metal)" stroke="var(--metal-dark)" stroke-width="1.5"/>
+
+              <g id="gripperGroup" transform="translate(0,-22)">
+                <line id="clawL" x1="0" y1="0" x2="-4" y2="-18" stroke="var(--metal-dark)" stroke-width="4" stroke-linecap="round"/>
+                <line id="clawR" x1="0" y1="0" x2="4" y2="-18" stroke="var(--metal-dark)" stroke-width="4" stroke-linecap="round"/>
+              </g>
+            </g>
+          </g>
+        </g>
+      </svg>
+
+      <svg id="compassSvg" viewBox="0 0 100 60" width="140">
+        <path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="var(--border)" stroke-width="6" stroke-linecap="round"/>
+        <line id="compassNeedle" x1="50" y1="50" x2="50" y2="14" stroke="var(--accent2)" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="50" cy="50" r="5" fill="var(--accent)"/>
+      </svg>
+      <div class="compass-label">Rotação da base (vista de cima)</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Controle das juntas</h2>
+    <div id="joints"></div>
+
+    <div class="speed-row">
+      <label for="speed">Velocidade</label>
+      <input type="range" id="speed" min="1" max="10" value="3">
+      <span id="speedVal" style="color:var(--accent2); font-size:13px;">3</span>
+    </div>
+
+    <div class="row" style="margin-top:16px;">
+      <button class="primary" id="btnHome">Posição inicial (Home)</button>
+      <button id="btnSave">+ Salvar posição</button>
+      <button class="danger" id="btnClear">Limpar sequência</button>
+    </div>
+
+    <div class="seq-list" id="seqList"></div>
+    <div class="row" style="margin-top:10px;" id="seqPlayRow" hidden>
+      <button class="primary" id="btnPlaySeq">▶ Reproduzir sequência</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>Conectado via Wi-Fi ao ESP32 &middot; WebSocket em <code>/ws</code></footer>
+
+<script>
+// Precisa bater com a ordem/limites definidos em src/main.cpp
+const JOINTS = [
+  { id: "base",       label: "Base (giro)",        min: 0,  max: 180, home: 90 },
+  { id: "shoulder",   label: "Ombro",               min: 15, max: 165, home: 90 },
+  { id: "elbow",      label: "Cotovelo",            min: 0,  max: 180, home: 90 },
+  { id: "wristPitch", label: "Pulso (cima/baixo)",  min: 0,  max: 180, home: 90 },
+  { id: "wristRoll",  label: "Pulso (giro)",        min: 0,  max: 180, home: 90 },
+  { id: "gripper",    label: "Garra",               min: 10, max: 90,  home: 10 },
+];
+
+const state = {};
+JOINTS.forEach(j => state[j.id] = j.home);
+
+const dragging = new Set();
+let ws = null;
+let wsReady = false;
+const lastSent = {};
+const SEND_THROTTLE_MS = 40;
+
+// ------------------------- UI: sliders -------------------------
+const jointsEl = document.getElementById("joints");
+JOINTS.forEach(j => {
+  const wrap = document.createElement("div");
+  wrap.className = "joint";
+  wrap.innerHTML = `
+    <div class="joint-head"><b>${j.label}</b><span class="val" id="val-${j.id}">${j.home}&deg;</span></div>
+    <input type="range" id="range-${j.id}" min="${j.min}" max="${j.max}" value="${j.home}">
+  `;
+  jointsEl.appendChild(wrap);
+
+  const input = wrap.querySelector("input");
+  input.addEventListener("pointerdown", () => dragging.add(j.id));
+  input.addEventListener("pointerup", () => dragging.delete(j.id));
+  input.addEventListener("input", () => {
+    const v = parseInt(input.value, 10);
+    state[j.id] = v;
+    document.getElementById(`val-${j.id}`).textContent = v + "°";
+    updateTwin();
+    sendMove(j.id, v);
+  });
+});
+
+function sendMove(id, pos) {
+  const now = performance.now();
+  if (lastSent[id] && now - lastSent[id] < SEND_THROTTLE_MS) return;
+  lastSent[id] = now;
+  send({ cmd: "move", id, pos });
+}
+
+// ------------------------- WebSocket -------------------------
+function connect() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+  ws.onopen = () => {
+    wsReady = true;
+    setStatus(true);
+  };
+  ws.onclose = () => {
+    wsReady = false;
+    setStatus(false);
+    setTimeout(connect, 1500);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = (evt) => {
+    try {
+      const msg = JSON.parse(evt.data);
+      if (msg.type === "state" && Array.isArray(msg.angles)) {
+        msg.angles.forEach(a => {
+          if (dragging.has(a.id)) return; // não sobrescreve enquanto o usuário arrasta
+          state[a.id] = a.angle;
+          const range = document.getElementById(`range-${a.id}`);
+          const val = document.getElementById(`val-${a.id}`);
+          if (range) range.value = a.angle;
+          if (val) val.textContent = a.angle + "°";
+        });
+        updateTwin();
+      }
+    } catch (e) { /* ignora mensagens inválidas */ }
+  };
+}
+
+function send(obj) {
+  if (wsReady && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(obj));
+  }
+}
+
+function setStatus(ok) {
+  document.getElementById("dot").classList.toggle("on", ok);
+  document.getElementById("statusText").textContent = ok ? "conectado" : "reconectando...";
+}
+
+// ------------------------- Gêmeo visual (SVG) -------------------------
+function updateTwin() {
+  const shoulder = state.shoulder - 90;
+  const elbow = state.elbow - 90;
+  const wristPitch = state.wristPitch - 90;
+  const wristRoll = state.wristRoll;
+  const base = state.base;
+
+  document.getElementById("shoulderGroup").setAttribute("transform", `translate(110,196) rotate(${shoulder})`);
+  document.getElementById("elbowGroup").setAttribute("transform", `translate(0,-72) rotate(${elbow})`);
+  document.getElementById("wristGroup").setAttribute("transform", `translate(0,-60) rotate(${wristPitch})`);
+  document.getElementById("rollIcon").setAttribute("transform", `translate(14,-4) rotate(${wristRoll * 2})`);
+
+  const g = JOINTS.find(j => j.id === "gripper");
+  const t = (state.gripper - g.min) / (g.max - g.min); // 0..1
+  const halfAngle = 6 + t * 30; // 6°..36°
+  document.getElementById("clawL").setAttribute("transform", `rotate(${-halfAngle})`);
+  document.getElementById("clawR").setAttribute("transform", `rotate(${halfAngle})`);
+
+  // bússola da base: mapeia 0..180 para um arco de -90..+90
+  const needleAngle = base - 90;
+  const rad = (needleAngle * Math.PI) / 180;
+  const len = 36;
+  const x = 50 + len * Math.sin(rad);
+  const y = 50 - len * Math.cos(rad);
+  document.getElementById("compassNeedle").setAttribute("x2", x.toFixed(1));
+  document.getElementById("compassNeedle").setAttribute("y2", y.toFixed(1));
+}
+
+// ------------------------- Home / velocidade -------------------------
+document.getElementById("btnHome").addEventListener("click", () => {
+  JOINTS.forEach(j => {
+    state[j.id] = j.home;
+    document.getElementById(`range-${j.id}`).value = j.home;
+    document.getElementById(`val-${j.id}`).textContent = j.home + "°";
+  });
+  updateTwin();
+  send({ cmd: "home" });
+});
+
+document.getElementById("speed").addEventListener("input", (e) => {
+  const v = parseInt(e.target.value, 10);
+  document.getElementById("speedVal").textContent = v;
+  send({ cmd: "speed", value: v });
+});
+
+// ------------------------- Sequência de posições (salva no navegador) -------------------------
+const STORAGE_KEY = "arm_sequence_v1";
+let sequence = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+function renderSeq() {
+  const list = document.getElementById("seqList");
+  list.innerHTML = "";
+  sequence.forEach((pose, i) => {
+    const item = document.createElement("div");
+    item.className = "seq-item";
+    item.innerHTML = `<span>Posição ${i + 1}</span>
+      <span class="seq-btns">
+        <button data-act="play" data-i="${i}">▶</button>
+        <button data-act="del" data-i="${i}">✕</button>
+      </span>`;
+    list.appendChild(item);
+  });
+  document.getElementById("seqPlayRow").hidden = sequence.length === 0;
+}
+
+document.getElementById("seqList").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  const i = parseInt(btn.dataset.i, 10);
+  if (btn.dataset.act === "del") {
+    sequence.splice(i, 1);
+  } else if (btn.dataset.act === "play") {
+    applyPose(sequence[i]);
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sequence));
+  renderSeq();
+});
+
+document.getElementById("btnSave").addEventListener("click", () => {
+  const pose = {};
+  JOINTS.forEach(j => pose[j.id] = state[j.id]);
+  sequence.push(pose);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sequence));
+  renderSeq();
+});
+
+document.getElementById("btnClear").addEventListener("click", () => {
+  sequence = [];
+  localStorage.removeItem(STORAGE_KEY);
+  renderSeq();
+});
+
+document.getElementById("btnPlaySeq").addEventListener("click", async () => {
+  for (const pose of sequence) {
+    applyPose(pose);
+    await new Promise(r => setTimeout(r, 1200));
+  }
+});
+
+function applyPose(pose) {
+  Object.keys(pose).forEach(id => {
+    state[id] = pose[id];
+    const range = document.getElementById(`range-${id}`);
+    const val = document.getElementById(`val-${id}`);
+    if (range) range.value = pose[id];
+    if (val) val.textContent = pose[id] + "°";
+    send({ cmd: "move", id, pos: pose[id] });
+  });
+  updateTwin();
+}
+
+renderSeq();
+updateTwin();
+connect();
+</script>
+</body>
+</html>
