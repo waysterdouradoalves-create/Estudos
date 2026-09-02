@@ -3,31 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Controle do Braço Robótico</title>
+<title>Braço Robótico ESP32</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
   :root {
-    --bg: #0f1420;
-    --panel: #161c2c;
+    /* tema claro (padrão) */
+    --bg: #eef1f6;
+    --panel: #ffffff;
+    --panel2: #f1f4fa;
+    --border: #d6dced;
+    --text: #131a2b;
+    --text2: #5c6884;
+    --accent: #2f6fed;
+    --accent2: #0f4fc4;
+    --ok: #12946b;
+    --bad: #d1364a;
+    --metal: #dfe3ec;
+    --metal-dark: #98a1b8;
+    --joint: #2f6fed;
+    --shadow: 0 1px 2px rgba(20, 30, 60, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10141f;
+      --panel: #171e30;
+      --panel2: #1e2740;
+      --border: #2b3554;
+      --text: #e9edf8;
+      --text2: #8a93b3;
+      --accent: #4c8dff;
+      --accent2: #6fd8ff;
+      --ok: #34d399;
+      --bad: #f97066;
+      --metal: #c7ccd6;
+      --metal-dark: #6b7488;
+      --joint: #4c8dff;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10141f;
+    --panel: #171e30;
     --panel2: #1e2740;
-    --border: #2a3352;
-    --text: #e8ecf5;
-    --text2: #8b93ad;
-    --accent: #2f8fef;
-    --accent2: #4fd1ff;
-    --ok: #22c55e;
-    --bad: #ef4444;
+    --border: #2b3554;
+    --text: #e9edf8;
+    --text2: #8a93b3;
+    --accent: #4c8dff;
+    --accent2: #6fd8ff;
+    --ok: #34d399;
+    --bad: #f97066;
     --metal: #c7ccd6;
-    --metal-dark: #8890a0;
-    --joint: #2f8fef;
+    --metal-dark: #6b7488;
+    --joint: #4c8dff;
+    --shadow: none;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+    font-family: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
     padding: 16px;
   }
+  code { font-family: "IBM Plex Mono", ui-monospace, monospace; }
   header {
     display: flex;
     align-items: center;
@@ -37,17 +75,26 @@
     max-width: 1100px;
     margin: 0 auto 16px;
   }
-  h1 { font-size: 20px; font-weight: 700; }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--accent);
+  }
+  h1 { font-size: 21px; font-weight: 700; text-wrap: balance; margin-top: 2px; }
   h1 span { color: var(--accent2); }
   .status {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 13px;
+    font-family: "IBM Plex Mono", monospace;
     color: var(--text2);
     background: var(--panel);
     border: 1px solid var(--border);
-    padding: 6px 12px;
+    box-shadow: var(--shadow);
+    padding: 6px 14px;
     border-radius: 999px;
   }
   .dot {
@@ -74,6 +121,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 16px;
+    box-shadow: var(--shadow);
   }
   .panel h2 {
     font-size: 13px;
@@ -100,7 +148,11 @@
     margin-bottom: 6px;
   }
   .joint-head b { font-weight: 600; }
-  .joint-head .val { color: var(--accent2); font-variant-numeric: tabular-nums; }
+  .joint-head .val {
+    color: var(--accent2);
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
   input[type="range"] {
     -webkit-appearance: none;
     width: 100%;
@@ -109,6 +161,11 @@
     background: var(--panel2);
     outline: none;
     border: 1px solid var(--border);
+  }
+  input[type="range"]:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -158,12 +215,20 @@
   .seq-item button { padding: 4px 10px; font-size: 12px; }
 
   footer { max-width: 1100px; margin: 20px auto 0; font-size: 12px; color: var(--text2); text-align: center; }
+  footer code { color: var(--text2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Braço Robótico <span>ESP32</span></h1>
+  <div>
+    <div class="eyebrow">Console de controle &middot; 6 eixos</div>
+    <h1>Braço Robótico <span>ESP32</span></h1>
+  </div>
   <div class="status"><span class="dot" id="dot"></span><span id="statusText">conectando...</span></div>
 </header>
 
