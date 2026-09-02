@@ -23,9 +23,32 @@ esp32-robotic-arm/
 3. A página tem um slider para cada uma das 6 juntas. Ao mover um slider,
    o navegador manda `{"cmd":"move","id":"shoulder","pos":120}` pelo
    WebSocket; o ESP32 aplica a rampa de movimento e escreve no servo.
-4. A página também desenha um "gêmeo visual" do braço (SVG) que se move
-   junto com os sliders, para você conferir a pose antes/durante o
+4. A página também desenha um "gêmeo visual" 3D do braço (Three.js/WebGL)
+   que se move junto com os sliders — dá pra arrastar para girar a câmera
+   e usar o scroll para dar zoom, para conferir a pose antes/durante o
    movimento real.
+
+### Sobre a visualização 3D e internet
+
+A biblioteca 3D (Three.js) é carregada de um CDN (`cdnjs.cloudflare.com`)
+diretamente pelo navegador que abre a página — **não** passa pelo ESP32.
+Isso funciona sem problema no caso mais comum: ESP32 conectado na sua rede
+Wi-Fi normal (modo estação), com o celular/PC na mesma rede e com acesso à
+internet. Se o ESP32 cair no modo ponto de acesso próprio (sem roteador
+por perto, portanto sem internet), a biblioteca não carrega e a página cai
+automaticamente em um modo de texto (lista de ângulos) — os sliders e o
+movimento real continuam funcionando normalmente, só a prévia 3D fica
+indisponível.
+
+Para eliminar essa dependência (funcionar 100% offline mesmo no modo AP),
+baixe estes dois arquivos e salve em `data/lib/`:
+- `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`
+- `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js`
+
+E troque as duas tags `<script src="https://cdnjs...">` no topo do
+`data/index.html` para apontar para `lib/three.min.js` e
+`lib/OrbitControls.js`. Isso aumenta o espaço usado no LittleFS em ~650 KB
+— confira se a sua placa/partição comporta antes de gravar.
 
 ## Hardware sugerido
 

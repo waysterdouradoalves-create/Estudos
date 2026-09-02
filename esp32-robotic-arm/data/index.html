@@ -21,6 +21,12 @@
     --metal: #dfe3ec;
     --metal-dark: #98a1b8;
     --joint: #2f6fed;
+    --joint-3d: #8fc2ea;
+    --tip-3d: #cfe8f7;
+    --plastic-3d: #d9dde5;
+    --dark-3d: #33394a;
+    --stage-top: #f5f8fd;
+    --stage-bottom: #dde5f2;
     --shadow: 0 1px 2px rgba(20, 30, 60, 0.06);
   }
   @media (prefers-color-scheme: dark) {
@@ -38,6 +44,12 @@
       --metal: #c7ccd6;
       --metal-dark: #6b7488;
       --joint: #4c8dff;
+      --joint-3d: #6fa8d8;
+      --tip-3d: #9fd4ec;
+      --plastic-3d: #c7ccd6;
+      --dark-3d: #1c2130;
+      --stage-top: #1b2338;
+      --stage-bottom: #0b0e17;
       --shadow: none;
     }
   }
@@ -55,6 +67,12 @@
     --metal: #c7ccd6;
     --metal-dark: #6b7488;
     --joint: #4c8dff;
+    --joint-3d: #6fa8d8;
+    --tip-3d: #9fd4ec;
+    --plastic-3d: #c7ccd6;
+    --dark-3d: #1c2130;
+    --stage-top: #1b2338;
+    --stage-bottom: #0b0e17;
     --shadow: none;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -131,10 +149,47 @@
     margin-bottom: 12px;
   }
 
-  /* ---- gêmeo visual do braço ---- */
-  .twin-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  #armSvg { width: 100%; max-width: 320px; height: auto; }
-  .compass-label { font-size: 12px; color: var(--text2); text-align: center; }
+  /* ---- gêmeo visual 3D do braço ---- */
+  .viz-panel { display: flex; flex-direction: column; gap: 10px; }
+  .viz-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 0; }
+  .viz-head h2 { margin-bottom: 0; }
+  .viz-hint { font-size: 11px; color: var(--text2); }
+  .stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: 12px;
+    overflow: hidden;
+    background: radial-gradient(120% 100% at 50% 12%, var(--stage-top), var(--stage-bottom));
+    border: 1px solid var(--border);
+    touch-action: none;
+    cursor: grab;
+  }
+  .stage:active { cursor: grabbing; }
+  .stage canvas { display: block; width: 100% !important; height: 100% !important; }
+  .stage-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 22px;
+    text-align: center;
+  }
+  .stage-fallback p { font-size: 13px; color: var(--text2); }
+  .stage-fallback p strong { color: var(--text); }
+  .fallback-angles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 14px;
+    margin-top: 6px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    text-align: left;
+  }
+  .fallback-angles span.k { color: var(--text2); }
+  .fallback-angles span.v { color: var(--accent2); font-variant-numeric: tabular-nums; }
 
   /* ---- controles das juntas ---- */
   .joint {
@@ -234,50 +289,17 @@
 
 <div class="layout">
 
-  <div class="panel">
-    <h2>Visualização</h2>
-    <div class="twin-wrap">
-      <svg id="armSvg" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg">
-        <!-- chão -->
-        <ellipse cx="110" cy="238" rx="90" ry="10" fill="#000" opacity="0.25"/>
-
-        <!-- pedestal / base -->
-        <rect x="80" y="205" width="60" height="30" rx="8" fill="#3a4150" stroke="#22283a" stroke-width="2"/>
-        <ellipse cx="110" cy="205" rx="34" ry="10" fill="var(--joint)"/>
-        <ellipse cx="110" cy="205" rx="34" ry="10" fill="none" stroke="#1a5fa8" stroke-width="2"/>
-
-        <!-- cadeia cinemática (ombro -> cotovelo -> pulso -> garra) -->
-        <g id="shoulderGroup" transform="translate(110,196)">
-          <circle r="12" fill="var(--joint)" stroke="#1a5fa8" stroke-width="2"/>
-          <rect x="-8" y="-72" width="16" height="72" rx="7" fill="var(--metal)" stroke="var(--metal-dark)" stroke-width="1.5"/>
-
-          <g id="elbowGroup" transform="translate(0,-72)">
-            <circle r="10" fill="var(--joint)" stroke="#1a5fa8" stroke-width="2"/>
-            <rect x="-7" y="-60" width="14" height="60" rx="6" fill="var(--metal)" stroke="var(--metal-dark)" stroke-width="1.5"/>
-
-            <g id="wristGroup" transform="translate(0,-60)">
-              <circle r="8" fill="var(--joint)" stroke="#1a5fa8" stroke-width="2"/>
-              <!-- ícone de giro do pulso -->
-              <g id="rollIcon" transform="translate(14,-4)">
-                <circle r="6" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-dasharray="3 3"/>
-              </g>
-              <rect x="-5" y="-22" width="10" height="22" rx="4" fill="var(--metal)" stroke="var(--metal-dark)" stroke-width="1.5"/>
-
-              <g id="gripperGroup" transform="translate(0,-22)">
-                <line id="clawL" x1="0" y1="0" x2="-4" y2="-18" stroke="var(--metal-dark)" stroke-width="4" stroke-linecap="round"/>
-                <line id="clawR" x1="0" y1="0" x2="4" y2="-18" stroke="var(--metal-dark)" stroke-width="4" stroke-linecap="round"/>
-              </g>
-            </g>
-          </g>
-        </g>
-      </svg>
-
-      <svg id="compassSvg" viewBox="0 0 100 60" width="140">
-        <path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="var(--border)" stroke-width="6" stroke-linecap="round"/>
-        <line id="compassNeedle" x1="50" y1="50" x2="50" y2="14" stroke="var(--accent2)" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="50" cy="50" r="5" fill="var(--accent)"/>
-      </svg>
-      <div class="compass-label">Rotação da base (vista de cima)</div>
+  <div class="panel viz-panel">
+    <div class="viz-head">
+      <h2>Visualização 3D</h2>
+      <span class="viz-hint">arraste para girar &middot; scroll para zoom</span>
+    </div>
+    <div class="stage" id="stage">
+      <div class="stage-fallback" id="stageFallback" hidden>
+        <p><strong>Pré-visualização 3D indisponível</strong></p>
+        <p>Não foi possível carregar a biblioteca 3D no navegador (verifique a conexão com a internet). Os controles abaixo continuam funcionando normalmente.</p>
+        <div class="fallback-angles" id="fallbackAngles"></div>
+      </div>
     </div>
   </div>
 
@@ -306,6 +328,18 @@
 </div>
 
 <footer>Conectado via Wi-Fi ao ESP32 &middot; WebSocket em <code>/ws</code></footer>
+
+<!--
+  Three.js (r128) via CDN, para a cena 3D. Se o navegador que abrir esta
+  página não tiver internet (ex.: conectado direto no ponto de acesso do
+  ESP32, sem roteador), estes dois arquivos não carregam e a página cai
+  automaticamente no modo de fallback em texto (ver JS abaixo) — os
+  controles continuam funcionando normalmente. Para eliminar essa
+  dependência, baixe os dois arquivos e sirva-os localmente em data/lib/
+  (veja o README).
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
 
 <script>
 // Precisa bater com a ordem/limites definidos em src/main.cpp
@@ -345,7 +379,7 @@ JOINTS.forEach(j => {
     const v = parseInt(input.value, 10);
     state[j.id] = v;
     document.getElementById(`val-${j.id}`).textContent = v + "°";
-    updateTwin();
+    updateVisual();
     sendMove(j.id, v);
   });
 });
@@ -384,7 +418,7 @@ function connect() {
           if (range) range.value = a.angle;
           if (val) val.textContent = a.angle + "°";
         });
-        updateTwin();
+        updateVisual();
       }
     } catch (e) { /* ignora mensagens inválidas */ }
   };
@@ -401,33 +435,224 @@ function setStatus(ok) {
   document.getElementById("statusText").textContent = ok ? "conectado" : "reconectando...";
 }
 
-// ------------------------- Gêmeo visual (SVG) -------------------------
-function updateTwin() {
-  const shoulder = state.shoulder - 90;
-  const elbow = state.elbow - 90;
-  const wristPitch = state.wristPitch - 90;
-  const wristRoll = state.wristRoll;
-  const base = state.base;
+// ------------------------- Gêmeo visual 3D (Three.js) -------------------------
+const has3D = typeof THREE !== "undefined";
+const hasOrbit = has3D && typeof THREE.OrbitControls !== "undefined";
 
-  document.getElementById("shoulderGroup").setAttribute("transform", `translate(110,196) rotate(${shoulder})`);
-  document.getElementById("elbowGroup").setAttribute("transform", `translate(0,-72) rotate(${elbow})`);
-  document.getElementById("wristGroup").setAttribute("transform", `translate(0,-60) rotate(${wristPitch})`);
-  document.getElementById("rollIcon").setAttribute("transform", `translate(14,-4) rotate(${wristRoll * 2})`);
+let renderer3d, scene3d, camera3d, controls3d;
+const arm3d = {};
+
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function buildArmScene() {
+  scene3d = new THREE.Scene();
+
+  const stageEl = document.getElementById("stage");
+  const w = stageEl.clientWidth, h = stageEl.clientHeight;
+
+  camera3d = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+  camera3d.position.set(3.4, 3.1, 4.2);
+
+  renderer3d = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer3d.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer3d.setSize(w, h);
+  renderer3d.shadowMap.enabled = true;
+  renderer3d.shadowMap.type = THREE.PCFSoftShadowMap;
+  stageEl.appendChild(renderer3d.domElement);
+
+  if (hasOrbit) {
+    controls3d = new THREE.OrbitControls(camera3d, renderer3d.domElement);
+    controls3d.target.set(0, 1.5, 0);
+    controls3d.enableDamping = true;
+    controls3d.dampingFactor = 0.08;
+    controls3d.minDistance = 3;
+    controls3d.maxDistance = 8.5;
+    controls3d.maxPolarAngle = Math.PI * 0.49;
+    controls3d.update();
+  } else {
+    camera3d.lookAt(0, 1.5, 0);
+  }
+
+  // --- luz de estúdio ---
+  scene3d.add(new THREE.HemisphereLight(0xeaf1ff, 0x2a2f3a, 0.95));
+  const key = new THREE.DirectionalLight(0xffffff, 1.1);
+  key.position.set(4, 6.5, 3);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.camera.left = -3.5; key.shadow.camera.right = 3.5;
+  key.shadow.camera.top = 3.5; key.shadow.camera.bottom = -3.5;
+  key.shadow.bias = -0.0025;
+  scene3d.add(key);
+  const fill = new THREE.DirectionalLight(0xbcd4ff, 0.35);
+  fill.position.set(-3, 2.2, -2.5);
+  scene3d.add(fill);
+
+  // --- chão que recebe sombra ---
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(3.3, 48),
+    new THREE.ShadowMaterial({ opacity: 0.25 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene3d.add(ground);
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(3.25, 3.3, 48),
+    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  scene3d.add(ring);
+
+  // --- materiais (cores lidas dos tokens do tema) ---
+  const matPlastic = new THREE.MeshStandardMaterial({ color: cssVar("--plastic-3d") || "#d9dde5", roughness: 0.55, metalness: 0.08 });
+  const matDark = new THREE.MeshStandardMaterial({ color: cssVar("--dark-3d") || "#33394a", roughness: 0.6, metalness: 0.15 });
+  const matJoint = new THREE.MeshStandardMaterial({ color: cssVar("--joint-3d") || "#8fc2ea", roughness: 0.35, metalness: 0.2 });
+  const matTip = new THREE.MeshStandardMaterial({ color: cssVar("--tip-3d") || "#cfe8f7", roughness: 0.3, metalness: 0.1 });
+
+  function mesh(geo, mat, castShadow = true) {
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = castShadow;
+    m.receiveShadow = true;
+    return m;
+  }
+  function radialJoint(radius, length) {
+    const g = mesh(new THREE.CylinderGeometry(radius, radius, length, 20), matJoint);
+    g.rotation.z = Math.PI / 2;
+    return g;
+  }
+
+  // --- pedestal fixo ---
+  const foot = mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.4, 32), matDark);
+  foot.position.y = 0.2;
+  scene3d.add(foot);
+  const collar = mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.14, 32), matJoint);
+  collar.position.y = 0.47;
+  scene3d.add(collar);
+
+  // --- base (gira em Y) ---
+  const turret = new THREE.Group();
+  turret.position.y = 0.54;
+  scene3d.add(turret);
+  const turretBody = mesh(new THREE.CylinderGeometry(0.4, 0.44, 0.28, 24), matPlastic);
+  turretBody.position.y = 0.14;
+  turret.add(turretBody);
+  const shoulderAxle = radialJoint(0.16, 0.5);
+  shoulderAxle.position.y = 0.32;
+  turret.add(shoulderAxle);
+
+  // --- ombro (pitch) ---
+  const shoulder = new THREE.Group();
+  shoulder.position.y = 0.32;
+  turret.add(shoulder);
+  const upperArm = mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 16), matPlastic);
+  upperArm.position.y = 0.55;
+  shoulder.add(upperArm);
+  const elbowAxle = radialJoint(0.14, 0.42);
+  elbowAxle.position.y = 1.1;
+  shoulder.add(elbowAxle);
+
+  // --- cotovelo ---
+  const elbow = new THREE.Group();
+  elbow.position.y = 1.1;
+  shoulder.add(elbow);
+  const forearm = mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.9, 16), matPlastic);
+  forearm.position.y = 0.45;
+  elbow.add(forearm);
+  const wristAxle = radialJoint(0.11, 0.34);
+  wristAxle.position.y = 0.9;
+  elbow.add(wristAxle);
+
+  // --- pulso: pitch ---
+  const wristPitch = new THREE.Group();
+  wristPitch.position.y = 0.9;
+  elbow.add(wristPitch);
+  const wristHousing = mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.24, 16), matPlastic);
+  wristHousing.position.y = 0.12;
+  wristPitch.add(wristHousing);
+
+  // --- pulso: roll (gira no próprio eixo — visível de verdade em 3D) ---
+  const wristRoll = new THREE.Group();
+  wristRoll.position.y = 0.24;
+  wristPitch.add(wristRoll);
+  const rollBody = mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.16, 16), matJoint);
+  rollBody.position.y = 0.08;
+  wristRoll.add(rollBody);
+  const rollMark = mesh(new THREE.BoxGeometry(0.03, 0.16, 0.05), matDark, false);
+  rollMark.position.set(0.1, 0.08, 0);
+  wristRoll.add(rollMark);
+
+  // --- garra (jaws paralelas) ---
+  const gripper = new THREE.Group();
+  gripper.position.y = 0.16;
+  wristRoll.add(gripper);
+  const gripMount = mesh(new THREE.BoxGeometry(0.24, 0.06, 0.14), matPlastic);
+  gripMount.position.y = 0.03;
+  gripper.add(gripMount);
+  const fingerGeo = new THREE.BoxGeometry(0.06, 0.3, 0.1);
+  const fingerL = mesh(fingerGeo, matTip);
+  const fingerR = mesh(fingerGeo, matTip);
+  fingerL.position.y = 0.06 + 0.15;
+  fingerR.position.y = 0.06 + 0.15;
+  gripper.add(fingerL, fingerR);
+
+  Object.assign(arm3d, { turret, shoulder, elbow, wristPitch, wristRoll, fingerL, fingerR });
+  syncArmToState();
+}
+
+function syncArmToState() {
+  if (!arm3d.turret) return;
+  const d2r = THREE.MathUtils.degToRad;
+  arm3d.turret.rotation.y = d2r(state.base - 90);
+  arm3d.shoulder.rotation.z = d2r(-(state.shoulder - 90));
+  arm3d.elbow.rotation.z = d2r(state.elbow - 90);
+  arm3d.wristPitch.rotation.z = d2r(-(state.wristPitch - 90));
+  arm3d.wristRoll.rotation.y = d2r(state.wristRoll);
 
   const g = JOINTS.find(j => j.id === "gripper");
   const t = (state.gripper - g.min) / (g.max - g.min); // 0..1
-  const halfAngle = 6 + t * 30; // 6°..36°
-  document.getElementById("clawL").setAttribute("transform", `rotate(${-halfAngle})`);
-  document.getElementById("clawR").setAttribute("transform", `rotate(${halfAngle})`);
+  const offset = 0.03 + t * 0.15;
+  arm3d.fingerL.position.x = -offset;
+  arm3d.fingerR.position.x = offset;
+}
 
-  // bússola da base: mapeia 0..180 para um arco de -90..+90
-  const needleAngle = base - 90;
-  const rad = (needleAngle * Math.PI) / 180;
-  const len = 36;
-  const x = 50 + len * Math.sin(rad);
-  const y = 50 - len * Math.cos(rad);
-  document.getElementById("compassNeedle").setAttribute("x2", x.toFixed(1));
-  document.getElementById("compassNeedle").setAttribute("y2", y.toFixed(1));
+function renderFallbackAngles() {
+  const box = document.getElementById("fallbackAngles");
+  box.innerHTML = JOINTS.map(j =>
+    `<span class="k">${j.label}</span><span class="v">${state[j.id]}&deg;</span>`
+  ).join("");
+}
+
+function updateVisual() {
+  if (has3D) {
+    syncArmToState();
+  } else {
+    renderFallbackAngles();
+  }
+}
+
+function onStageResize() {
+  if (!has3D || !renderer3d) return;
+  const stageEl = document.getElementById("stage");
+  const w = stageEl.clientWidth, h = stageEl.clientHeight;
+  camera3d.aspect = w / h;
+  camera3d.updateProjectionMatrix();
+  renderer3d.setSize(w, h);
+}
+
+function animate3d() {
+  requestAnimationFrame(animate3d);
+  if (controls3d) controls3d.update();
+  if (renderer3d && scene3d && camera3d) renderer3d.render(scene3d, camera3d);
+}
+
+if (has3D) {
+  buildArmScene();
+  window.addEventListener("resize", onStageResize);
+  animate3d();
+} else {
+  document.getElementById("stageFallback").hidden = false;
+  renderFallbackAngles();
 }
 
 // ------------------------- Home / velocidade -------------------------
@@ -437,7 +662,7 @@ document.getElementById("btnHome").addEventListener("click", () => {
     document.getElementById(`range-${j.id}`).value = j.home;
     document.getElementById(`val-${j.id}`).textContent = j.home + "°";
   });
-  updateTwin();
+  updateVisual();
   send({ cmd: "home" });
 });
 
@@ -510,11 +735,11 @@ function applyPose(pose) {
     if (val) val.textContent = pose[id] + "°";
     send({ cmd: "move", id, pos: pose[id] });
   });
-  updateTwin();
+  updateVisual();
 }
 
 renderSeq();
-updateTwin();
+updateVisual();
 connect();
 </script>
 </body>
