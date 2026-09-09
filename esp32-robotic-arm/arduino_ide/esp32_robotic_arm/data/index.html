@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Braço Robótico ESP32</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    /* tema claro (padrão) */
+    --bg: #eef1f6;
+    --panel: #ffffff;
+    --panel2: #f1f4fa;
+    --border: #d6dced;
+    --text: #131a2b;
+    --text2: #5c6884;
+    --accent: #2f6fed;
+    --accent2: #0f4fc4;
+    --ok: #12946b;
+    --bad: #d1364a;
+    --metal: #dfe3ec;
+    --metal-dark: #98a1b8;
+    --joint: #2f6fed;
+    --stage-top: #f5f8fd;
+    --stage-bottom: #dde5f2;
+    --shadow: 0 1px 2px rgba(20, 30, 60, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10141f;
+      --panel: #171e30;
+      --panel2: #1e2740;
+      --border: #2b3554;
+      --text: #e9edf8;
+      --text2: #8a93b3;
+      --accent: #4c8dff;
+      --accent2: #6fd8ff;
+      --ok: #34d399;
+      --bad: #f97066;
+      --metal: #c7ccd6;
+      --metal-dark: #6b7488;
+      --joint: #4c8dff;
+      --stage-top: #1b2338;
+      --stage-bottom: #0b0e17;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10141f;
+    --panel: #171e30;
+    --panel2: #1e2740;
+    --border: #2b3554;
+    --text: #e9edf8;
+    --text2: #8a93b3;
+    --accent: #4c8dff;
+    --accent2: #6fd8ff;
+    --ok: #34d399;
+    --bad: #f97066;
+    --metal: #c7ccd6;
+    --metal-dark: #6b7488;
+    --joint: #4c8dff;
+    --stage-top: #1b2338;
+    --stage-bottom: #0b0e17;
+    --shadow: none;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  code { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 1100px;
+    margin: 0 auto 16px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--accent);
+  }
+  h1 { font-size: 21px; font-weight: 700; text-wrap: balance; margin-top: 2px; }
+  h1 span { color: var(--accent2); }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-family: "IBM Plex Mono", monospace;
+    color: var(--text2);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 6px 14px;
+    border-radius: 999px;
+  }
+  .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--bad);
+    box-shadow: 0 0 8px var(--bad);
+    transition: background .2s, box-shadow .2s;
+  }
+  .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(260px, 380px) 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .panel h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text2);
+    margin-bottom: 12px;
+  }
+
+  /* ---- gêmeo visual 3D do braço ---- */
+  .viz-panel { display: flex; flex-direction: column; gap: 10px; }
+  .viz-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 0; }
+  .viz-head h2 { margin-bottom: 0; }
+  .viz-hint { font-size: 11px; color: var(--text2); }
+  .stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: 12px;
+    overflow: hidden;
+    background: radial-gradient(120% 100% at 50% 12%, var(--stage-top), var(--stage-bottom));
+    border: 1px solid var(--border);
+    touch-action: none;
+    cursor: grab;
+  }
+  .stage:active { cursor: grabbing; }
+  .stage canvas { display: block; width: 100% !important; height: 100% !important; }
+  .stage-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 22px;
+    text-align: center;
+  }
+  .stage-fallback p { font-size: 13px; color: var(--text2); }
+  .stage-fallback p strong { color: var(--text); }
+  .fallback-angles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 14px;
+    margin-top: 6px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    text-align: left;
+  }
+  .fallback-angles span.k { color: var(--text2); }
+  .fallback-angles span.v { color: var(--accent2); font-variant-numeric: tabular-nums; }
+
+  /* ---- controles das juntas ---- */
+  .joint {
+    margin-bottom: 16px;
+  }
+  .joint:last-child { margin-bottom: 0; }
+  .joint-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .joint-head b { font-weight: 600; }
+  .joint-head .val {
+    color: var(--accent2);
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--panel2);
+    outline: none;
+    border: 1px solid var(--border);
+  }
+  input[type="range"]:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    cursor: pointer;
+  }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel2);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: border-color .15s, background .15s;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #05111f; }
+  button.primary:hover { background: var(--accent2); }
+  button.danger:hover { border-color: var(--bad); }
+
+  .speed-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .speed-row label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+
+  .calib-banner {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--panel2);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    font-size: 12px;
+  }
+  input[type="range"]:disabled,
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
+  .seq-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 180px; overflow-y: auto; }
+  .seq-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--panel2); border: 1px solid var(--border);
+    padding: 8px 10px; border-radius: 8px; font-size: 13px;
+  }
+  .seq-item .seq-btns { display: flex; gap: 6px; }
+  .seq-item button { padding: 4px 10px; font-size: 12px; }
+
+  footer { max-width: 1100px; margin: 20px auto 0; font-size: 12px; color: var(--text2); text-align: center; }
+  footer code { color: var(--text2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="eyebrow">Console de controle &middot; 6 eixos</div>
+    <h1>Braço Robótico <span>ESP32</span></h1>
+  </div>
+  <div class="status"><span class="dot" id="dot"></span><span id="statusText">conectando...</span></div>
+</header>
+
+<div class="layout">
+
+  <div class="panel viz-panel">
+    <div class="viz-head">
+      <h2>Visualização 3D</h2>
+      <span class="viz-hint">arraste para girar &middot; scroll para zoom</span>
+    </div>
+    <div class="stage" id="stage">
+      <div class="stage-fallback" id="stageFallback" hidden>
+        <p><strong>Pré-visualização 3D indisponível</strong></p>
+        <p>Não foi possível carregar a biblioteca 3D no navegador (verifique a conexão com a internet). Os controles abaixo continuam funcionando normalmente.</p>
+        <div class="fallback-angles" id="fallbackAngles"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Controle das juntas</h2>
+    <div id="joints"></div>
+
+    <div class="speed-row">
+      <label for="speed">Velocidade</label>
+      <input type="range" id="speed" min="1" max="10" value="6">
+      <span id="speedVal" style="color:var(--accent2); font-size:13px;">6</span>
+    </div>
+
+    <div class="calib-banner" id="calibBanner" hidden>Calibrando eixos (buscando fins de curso)&hellip; controles desativados.</div>
+
+    <div class="row" style="margin-top:16px;">
+      <button class="primary" id="btnHome">Posição inicial (Home)</button>
+      <button id="btnCalibrate">Calibrar eixos</button>
+      <button id="btnSave">+ Salvar posição</button>
+      <button class="danger" id="btnClear">Limpar sequência</button>
+    </div>
+
+    <div class="seq-list" id="seqList"></div>
+    <div class="row" style="margin-top:10px;" id="seqPlayRow" hidden>
+      <button class="primary" id="btnPlaySeq">▶ Reproduzir sequência</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>Conectado via Wi-Fi ao ESP32 &middot; WebSocket em <code>/ws</code></footer>
+
+<!--
+  Three.js (r128) via CDN, para a cena 3D. Se o navegador que abrir esta
+  página não tiver internet (ex.: conectado direto no ponto de acesso do
+  ESP32, sem roteador), estes dois arquivos não carregam e a página cai
+  automaticamente no modo de fallback em texto (ver JS abaixo) — os
+  controles continuam funcionando normalmente. Para eliminar essa
+  dependência, baixe os dois arquivos e sirva-os localmente em data/lib/
+  (veja o README).
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// Precisa bater com a ordem/limites definidos em src/main.cpp
+const JOINTS = [
+  { id: "base",       label: "Base (giro)",        min: 0,  max: 180, home: 90 },
+  { id: "shoulder",   label: "Ombro",               min: 15, max: 165, home: 90 },
+  { id: "elbow",      label: "Cotovelo",            min: 0,  max: 180, home: 90 },
+  { id: "wristPitch", label: "Pulso (cima/baixo)",  min: 0,  max: 180, home: 90 },
+  { id: "wristRoll",  label: "Pulso (giro)",        min: 0,  max: 180, home: 90 },
+  { id: "gripper",    label: "Garra",               min: 10, max: 90,  home: 10 },
+];
+
+const state = {};
+JOINTS.forEach(j => state[j.id] = j.home);
+
+const dragging = new Set();
+let ws = null;
+let wsReady = false;
+const lastSent = {};
+const SEND_THROTTLE_MS = 40;
+
+// ------------------------- UI: sliders -------------------------
+const jointsEl = document.getElementById("joints");
+JOINTS.forEach(j => {
+  const wrap = document.createElement("div");
+  wrap.className = "joint";
+  wrap.innerHTML = `
+    <div class="joint-head"><b>${j.label}</b><span class="val" id="val-${j.id}">${j.home}&deg;</span></div>
+    <input type="range" id="range-${j.id}" min="${j.min}" max="${j.max}" value="${j.home}">
+  `;
+  jointsEl.appendChild(wrap);
+
+  const input = wrap.querySelector("input");
+  input.addEventListener("pointerdown", () => dragging.add(j.id));
+  input.addEventListener("pointerup", () => dragging.delete(j.id));
+  input.addEventListener("input", () => {
+    const v = parseInt(input.value, 10);
+    state[j.id] = v;
+    document.getElementById(`val-${j.id}`).textContent = v + "°";
+    updateVisual();
+    sendMove(j.id, v);
+  });
+});
+
+function sendMove(id, pos) {
+  const now = performance.now();
+  if (lastSent[id] && now - lastSent[id] < SEND_THROTTLE_MS) return;
+  lastSent[id] = now;
+  send({ cmd: "move", id, pos });
+}
+
+// ------------------------- WebSocket -------------------------
+let calibrating = false;
+
+function setCalibrating(on) {
+  calibrating = on;
+  document.getElementById("calibBanner").hidden = !on;
+  document.querySelectorAll('#joints input[type="range"], #btnHome, #btnPlaySeq').forEach(el => {
+    el.disabled = on;
+  });
+}
+
+function connect() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+  ws.onopen = () => {
+    wsReady = true;
+    setStatus(true);
+  };
+  ws.onclose = () => {
+    wsReady = false;
+    setStatus(false);
+    setTimeout(connect, 1500);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = (evt) => {
+    try {
+      const msg = JSON.parse(evt.data);
+      if (msg.type === "state" && Array.isArray(msg.angles)) {
+        if (typeof msg.calibrating === "boolean") setCalibrating(msg.calibrating);
+        msg.angles.forEach(a => {
+          if (dragging.has(a.id)) return; // não sobrescreve enquanto o usuário arrasta
+          const angle = Math.round(a.angle);
+          state[a.id] = angle;
+          const range = document.getElementById(`range-${a.id}`);
+          const val = document.getElementById(`val-${a.id}`);
+          if (range) range.value = angle;
+          if (val) val.textContent = angle + "°";
+        });
+        updateVisual();
+      }
+    } catch (e) { /* ignora mensagens inválidas */ }
+  };
+}
+
+function send(obj) {
+  if (wsReady && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(obj));
+  }
+}
+
+function setStatus(ok) {
+  document.getElementById("dot").classList.toggle("on", ok);
+  document.getElementById("statusText").textContent = ok ? "conectado" : "reconectando...";
+}
+
+// ------------------------- Gêmeo visual 3D (Three.js) -------------------------
+const has3D = typeof THREE !== "undefined";
+const hasOrbit = has3D && typeof THREE.OrbitControls !== "undefined";
+
+let renderer3d, scene3d, camera3d, controls3d;
+const arm3d = {};
+
+function buildArmScene() {
+  scene3d = new THREE.Scene();
+
+  const stageEl = document.getElementById("stage");
+  const w = stageEl.clientWidth, h = stageEl.clientHeight;
+
+  camera3d = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+  camera3d.position.set(3.4, 3.1, 4.2);
+
+  renderer3d = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer3d.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer3d.setSize(w, h);
+  renderer3d.shadowMap.enabled = true;
+  renderer3d.shadowMap.type = THREE.PCFSoftShadowMap;
+  stageEl.appendChild(renderer3d.domElement);
+
+  if (hasOrbit) {
+    controls3d = new THREE.OrbitControls(camera3d, renderer3d.domElement);
+    controls3d.target.set(0, 1.5, 0);
+    controls3d.enableDamping = true;
+    controls3d.dampingFactor = 0.08;
+    controls3d.minDistance = 3;
+    controls3d.maxDistance = 8.5;
+    controls3d.maxPolarAngle = Math.PI * 0.49;
+    controls3d.update();
+  } else {
+    camera3d.lookAt(0, 1.5, 0);
+  }
+
+  // --- luz de estúdio ---
+  scene3d.add(new THREE.HemisphereLight(0xeaf1ff, 0x2a2f3a, 0.95));
+  const key = new THREE.DirectionalLight(0xffffff, 1.1);
+  key.position.set(4, 6.5, 3);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.camera.left = -3.5; key.shadow.camera.right = 3.5;
+  key.shadow.camera.top = 3.5; key.shadow.camera.bottom = -3.5;
+  key.shadow.bias = -0.0025;
+  scene3d.add(key);
+  const fill = new THREE.DirectionalLight(0xbcd4ff, 0.35);
+  fill.position.set(-3, 2.2, -2.5);
+  scene3d.add(fill);
+
+  // --- chão que recebe sombra ---
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(3.3, 48),
+    new THREE.ShadowMaterial({ opacity: 0.25 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene3d.add(ground);
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(3.25, 3.3, 48),
+    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  scene3d.add(ring);
+
+  // --- materiais: réplica das cores reais do braço (impressão 3D branca
+  // com carcaças pretas nas juntas) — cores fixas, não seguem o tema da UI,
+  // porque o plástico do braço não muda de cor com o modo claro/escuro.
+  const matBody = new THREE.MeshStandardMaterial({ color: 0xf1efe8, roughness: 0.5, metalness: 0.04 });
+  const matBand = new THREE.MeshStandardMaterial({ color: 0xf7f6f2, roughness: 0.4, metalness: 0.04 });
+  const matHousing = new THREE.MeshStandardMaterial({ color: 0x1c1c1f, roughness: 0.45, metalness: 0.2 });
+  const matVent = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.8 });
+  const matGrip = new THREE.MeshStandardMaterial({ color: 0x2a2a2e, roughness: 0.55, metalness: 0.1 });
+
+  function mesh(geo, mat, castShadow = true) {
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = castShadow;
+    m.receiveShadow = true;
+    return m;
+  }
+  function radialJoint(radius, length) {
+    const g = mesh(new THREE.CylinderGeometry(radius, radius, length, 20), matHousing);
+    g.rotation.z = Math.PI / 2;
+    return g;
+  }
+  // grade de furos de ventilação na face circular de uma carcaça de motor
+  // orientada ao longo do eixo X local (detalhe das juntas pretas do braço real)
+  function ventGrid(group, faceX, discRadius) {
+    const rows = 3, cols = 3, spacing = discRadius * 0.5;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const hole = mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.01, 8), matVent, false);
+        hole.rotation.z = Math.PI / 2;
+        hole.position.set(faceX, (r - 1) * spacing, (c - 1) * spacing);
+        group.add(hole);
+      }
+    }
+  }
+
+  // --- pé fixo: base cônica preta (não gira) ---
+  const foot = mesh(new THREE.CylinderGeometry(0.34, 0.6, 0.52, 32), matHousing);
+  foot.position.y = 0.26;
+  scene3d.add(foot);
+  const footBand = mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.05, 32), matBand);
+  footBand.position.y = 0.5;
+  scene3d.add(footBand);
+
+  // --- base (gira em Y): carcaça cilíndrica preta com aro branco no topo ---
+  const turret = new THREE.Group();
+  turret.position.y = 0.525;
+  scene3d.add(turret);
+  const turretBody = mesh(new THREE.CylinderGeometry(0.34, 0.36, 0.34, 24), matHousing);
+  turretBody.position.y = 0.17;
+  turret.add(turretBody);
+  const turretBand = mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.04, 24), matBand);
+  turretBand.position.y = 0.36;
+  turret.add(turretBand);
+
+  // --- ombro (pitch) ---
+  const shoulder = new THREE.Group();
+  shoulder.position.y = 0.38;
+  turret.add(shoulder);
+  const upperArm = mesh(new THREE.CylinderGeometry(0.19, 0.19, 1.05, 16), matBody);
+  upperArm.position.y = 0.525;
+  shoulder.add(upperArm);
+
+  // --- cotovelo: carcaça preta grande com furos de ventilação ---
+  const elbow = new THREE.Group();
+  elbow.position.y = 1.05;
+  shoulder.add(elbow);
+  const elbowHousing = mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.3, 24), matHousing);
+  elbowHousing.rotation.z = Math.PI / 2;
+  elbow.add(elbowHousing);
+  ventGrid(elbow, 0.155, 0.16);
+  ventGrid(elbow, -0.155, 0.16);
+  const forearm = mesh(new THREE.CylinderGeometry(0.15, 0.16, 0.85, 16), matBody);
+  forearm.position.y = 0.42;
+  elbow.add(forearm);
+
+  // --- pulso: pitch ---
+  const wristPitch = new THREE.Group();
+  wristPitch.position.y = 0.85;
+  elbow.add(wristPitch);
+  const wristAxle = radialJoint(0.13, 0.4);
+  wristPitch.add(wristAxle);
+  const wristExt = mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.4, 16), matBody);
+  wristExt.position.y = 0.2;
+  wristPitch.add(wristExt);
+
+  // --- pulso: roll (gira no próprio eixo — visível de verdade em 3D) ---
+  const wristRoll = new THREE.Group();
+  wristRoll.position.y = 0.4;
+  wristPitch.add(wristRoll);
+  const rollBody = mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.16, 16), matHousing);
+  rollBody.position.y = 0.08;
+  wristRoll.add(rollBody);
+  const rollMark = mesh(new THREE.BoxGeometry(0.03, 0.16, 0.05), matBand, false);
+  rollMark.position.set(0.1, 0.08, 0);
+  wristRoll.add(rollMark);
+
+  // --- garra (jaws paralelas, dedos escuros de borracha) ---
+  const gripper = new THREE.Group();
+  gripper.position.y = 0.16;
+  wristRoll.add(gripper);
+  const gripMount = mesh(new THREE.BoxGeometry(0.22, 0.06, 0.13), matBody);
+  gripMount.position.y = 0.03;
+  gripper.add(gripMount);
+  const fingerGeo = new THREE.BoxGeometry(0.055, 0.28, 0.09);
+  const fingerL = mesh(fingerGeo, matGrip);
+  const fingerR = mesh(fingerGeo, matGrip);
+  fingerL.position.y = 0.06 + 0.14;
+  fingerR.position.y = 0.06 + 0.14;
+  gripper.add(fingerL, fingerR);
+
+  Object.assign(arm3d, { turret, shoulder, elbow, wristPitch, wristRoll, fingerL, fingerR });
+  syncArmToState();
+}
+
+function syncArmToState() {
+  if (!arm3d.turret) return;
+  const d2r = THREE.MathUtils.degToRad;
+  arm3d.turret.rotation.y = d2r(state.base - 90);
+  arm3d.shoulder.rotation.z = d2r(-(state.shoulder - 90));
+  arm3d.elbow.rotation.z = d2r(state.elbow - 90);
+  arm3d.wristPitch.rotation.z = d2r(-(state.wristPitch - 90));
+  arm3d.wristRoll.rotation.y = d2r(state.wristRoll);
+
+  const g = JOINTS.find(j => j.id === "gripper");
+  const t = (state.gripper - g.min) / (g.max - g.min); // 0..1
+  const offset = 0.03 + t * 0.15;
+  arm3d.fingerL.position.x = -offset;
+  arm3d.fingerR.position.x = offset;
+}
+
+function renderFallbackAngles() {
+  const box = document.getElementById("fallbackAngles");
+  box.innerHTML = JOINTS.map(j =>
+    `<span class="k">${j.label}</span><span class="v">${state[j.id]}&deg;</span>`
+  ).join("");
+}
+
+function updateVisual() {
+  if (has3D) {
+    syncArmToState();
+  } else {
+    renderFallbackAngles();
+  }
+}
+
+function onStageResize() {
+  if (!has3D || !renderer3d) return;
+  const stageEl = document.getElementById("stage");
+  const w = stageEl.clientWidth, h = stageEl.clientHeight;
+  camera3d.aspect = w / h;
+  camera3d.updateProjectionMatrix();
+  renderer3d.setSize(w, h);
+}
+
+function animate3d() {
+  requestAnimationFrame(animate3d);
+  if (controls3d) controls3d.update();
+  if (renderer3d && scene3d && camera3d) renderer3d.render(scene3d, camera3d);
+}
+
+if (has3D) {
+  buildArmScene();
+  window.addEventListener("resize", onStageResize);
+  animate3d();
+} else {
+  document.getElementById("stageFallback").hidden = false;
+  renderFallbackAngles();
+}
+
+// ------------------------- Home / velocidade -------------------------
+document.getElementById("btnHome").addEventListener("click", () => {
+  JOINTS.forEach(j => {
+    state[j.id] = j.home;
+    document.getElementById(`range-${j.id}`).value = j.home;
+    document.getElementById(`val-${j.id}`).textContent = j.home + "°";
+  });
+  updateVisual();
+  send({ cmd: "home" });
+});
+
+document.getElementById("btnCalibrate").addEventListener("click", () => {
+  if (confirm("Recalibrar os eixos? O braço vai se mover em direção aos fins de curso.")) {
+    send({ cmd: "calibrate" });
+  }
+});
+
+document.getElementById("speed").addEventListener("input", (e) => {
+  const v = parseInt(e.target.value, 10);
+  document.getElementById("speedVal").textContent = v;
+  send({ cmd: "speed", value: v });
+});
+
+// ------------------------- Sequência de posições (salva no navegador) -------------------------
+const STORAGE_KEY = "arm_sequence_v1";
+let sequence = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+function renderSeq() {
+  const list = document.getElementById("seqList");
+  list.innerHTML = "";
+  sequence.forEach((pose, i) => {
+    const item = document.createElement("div");
+    item.className = "seq-item";
+    item.innerHTML = `<span>Posição ${i + 1}</span>
+      <span class="seq-btns">
+        <button data-act="play" data-i="${i}">▶</button>
+        <button data-act="del" data-i="${i}">✕</button>
+      </span>`;
+    list.appendChild(item);
+  });
+  document.getElementById("seqPlayRow").hidden = sequence.length === 0;
+}
+
+document.getElementById("seqList").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  const i = parseInt(btn.dataset.i, 10);
+  if (btn.dataset.act === "del") {
+    sequence.splice(i, 1);
+  } else if (btn.dataset.act === "play") {
+    applyPose(sequence[i]);
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sequence));
+  renderSeq();
+});
+
+document.getElementById("btnSave").addEventListener("click", () => {
+  const pose = {};
+  JOINTS.forEach(j => pose[j.id] = state[j.id]);
+  sequence.push(pose);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sequence));
+  renderSeq();
+});
+
+document.getElementById("btnClear").addEventListener("click", () => {
+  sequence = [];
+  localStorage.removeItem(STORAGE_KEY);
+  renderSeq();
+});
+
+document.getElementById("btnPlaySeq").addEventListener("click", async () => {
+  for (const pose of sequence) {
+    applyPose(pose);
+    await new Promise(r => setTimeout(r, 1200));
+  }
+});
+
+function applyPose(pose) {
+  Object.keys(pose).forEach(id => {
+    state[id] = pose[id];
+    const range = document.getElementById(`range-${id}`);
+    const val = document.getElementById(`val-${id}`);
+    if (range) range.value = pose[id];
+    if (val) val.textContent = pose[id] + "°";
+    send({ cmd: "move", id, pos: pose[id] });
+  });
+  updateVisual();
+}
+
+renderSeq();
+updateVisual();
+connect();
+</script>
+</body>
+</html>

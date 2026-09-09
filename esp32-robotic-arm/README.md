@@ -9,9 +9,12 @@ o uso.
 
 ```
 esp32-robotic-arm/
-├── platformio.ini      # projeto PlatformIO (VSCode)
-├── src/main.cpp        # firmware do ESP32
-├── data/index.html     # site de controle (servido pelo próprio ESP32)
+├── platformio.ini                                # projeto PlatformIO (VSCode)
+├── src/main.cpp                                   # firmware do ESP32 (PlatformIO)
+├── data/index.html                                # site de controle (servido pelo próprio ESP32)
+├── arduino_ide/esp32_robotic_arm/
+│   ├── esp32_robotic_arm.ino                      # mesmo firmware, pronto pro Arduino IDE
+│   └── data/index.html                            # cópia do site, para o upload de LittleFS do IDE
 └── README.md
 ```
 
@@ -148,15 +151,44 @@ dentes das duas polias (`gearRatio = dentes_polia_grande / dentes_polia_motor`).
 
 ### Opção B — Arduino IDE
 
-1. Instale o suporte a placas ESP32 (Board Manager) e, no Library
-   Manager, instale: `ESPAsyncWebServer`, `AsyncTCP`, `ArduinoJson`
-   (v7+) e `AccelStepper` (de Mike McCauley).
-2. Instale o plugin "ESP32 Sketch Data Upload" para gravar a pasta
-   `data/` no LittleFS.
-3. Abra `src/main.cpp` como um sketch (renomeie a pasta para
-   `esp32_robotic_arm/esp32_robotic_arm.ino` se preferir a extensão
-   `.ino`), preencha o Wi-Fi e os pinos, grave o firmware e depois use
-   "ESP32 Sketch Data Upload" para enviar `data/index.html`.
+Use a pasta `arduino_ide/esp32_robotic_arm/` — já está no formato que o
+Arduino IDE espera (pasta com o mesmo nome do arquivo `.ino`, e uma
+subpasta `data/` com o site).
+
+1. **Suporte à placa ESP32**: em `Arquivo > Preferências`, adicione em
+   "URLs Adicionais para Gerenciadores de Placas":
+   `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
+   Depois, em `Ferramentas > Placa > Gerenciador de Placas`, instale
+   "esp32 by Espressif Systems".
+2. **Bibliotecas**: em `Sketch > Incluir Biblioteca > Gerenciar
+   Bibliotecas`, instale:
+   - `ESPAsyncWebServer` (procure a versão mantida por ESP32Async/lacamera)
+   - `AsyncTCP` (idem, mesma organização)
+   - `ArduinoJson` (Benoit Blanchon, versão 7.x)
+   - `AccelStepper` (Mike McCauley)
+3. **Plugin de upload do LittleFS**: o Arduino IDE não grava a pasta
+   `data/` sozinho — precisa de um plugin separado. Procure por "arduino
+   littlefs upload" (ou "ESP32 Sketch Data Upload" nas versões mais
+   antigas do IDE) e instale a versão compatível com a sua versão do
+   Arduino IDE — o nome exato e o processo de instalação mudam entre
+   versões do IDE, então confira a documentação atual do plugin escolhido.
+4. Abra `arduino_ide/esp32_robotic_arm/esp32_robotic_arm.ino` no Arduino
+   IDE (ele carrega a pasta inteira como sketch).
+5. Em `Ferramentas`, selecione a placa "ESP32 Dev Module" e um
+   **Partition Scheme** com espaço para LittleFS (ex.: "Default 4MB with
+   spiffs (1.2MB APP/1.5MB SPIFFS)" — o nome varia conforme a placa/pacote).
+6. Preencha `WIFI_SSID`/`WIFI_PASSWORD` e os pinos/relação de redução de
+   cada junta no array `joints[]`, no topo do `.ino`.
+7. Grave o firmware (`Sketch > Carregar`).
+8. Use o plugin de upload do LittleFS para enviar a pasta `data/` deste
+   mesmo sketch (não a `data/` da raiz do projeto).
+9. Abra o Monitor Serial (115200 baud) para acompanhar a calibração
+   inicial e ver o IP atribuído.
+
+> Se você editar `src/main.cpp` (versão PlatformIO) depois, copie as
+> mudanças também para `arduino_ide/esp32_robotic_arm/esp32_robotic_arm.ino`
+> — são o mesmo firmware, mantidos como dois arquivos por conveniência.
+> O mesmo vale para `data/index.html`: mantenha as duas cópias iguais.
 
 ## Usando o site
 
