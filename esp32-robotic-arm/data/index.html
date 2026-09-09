@@ -21,10 +21,6 @@
     --metal: #dfe3ec;
     --metal-dark: #98a1b8;
     --joint: #2f6fed;
-    --joint-3d: #8fc2ea;
-    --tip-3d: #cfe8f7;
-    --plastic-3d: #d9dde5;
-    --dark-3d: #33394a;
     --stage-top: #f5f8fd;
     --stage-bottom: #dde5f2;
     --shadow: 0 1px 2px rgba(20, 30, 60, 0.06);
@@ -44,10 +40,6 @@
       --metal: #c7ccd6;
       --metal-dark: #6b7488;
       --joint: #4c8dff;
-      --joint-3d: #6fa8d8;
-      --tip-3d: #9fd4ec;
-      --plastic-3d: #c7ccd6;
-      --dark-3d: #1c2130;
       --stage-top: #1b2338;
       --stage-bottom: #0b0e17;
       --shadow: none;
@@ -67,10 +59,6 @@
     --metal: #c7ccd6;
     --metal-dark: #6b7488;
     --joint: #4c8dff;
-    --joint-3d: #6fa8d8;
-    --tip-3d: #9fd4ec;
-    --plastic-3d: #c7ccd6;
-    --dark-3d: #1c2130;
     --stage-top: #1b2338;
     --stage-bottom: #0b0e17;
     --shadow: none;
@@ -442,10 +430,6 @@ const hasOrbit = has3D && typeof THREE.OrbitControls !== "undefined";
 let renderer3d, scene3d, camera3d, controls3d;
 const arm3d = {};
 
-function cssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
 function buildArmScene() {
   scene3d = new THREE.Scene();
 
@@ -504,11 +488,14 @@ function buildArmScene() {
   ring.rotation.x = -Math.PI / 2;
   scene3d.add(ring);
 
-  // --- materiais (cores lidas dos tokens do tema) ---
-  const matPlastic = new THREE.MeshStandardMaterial({ color: cssVar("--plastic-3d") || "#d9dde5", roughness: 0.55, metalness: 0.08 });
-  const matDark = new THREE.MeshStandardMaterial({ color: cssVar("--dark-3d") || "#33394a", roughness: 0.6, metalness: 0.15 });
-  const matJoint = new THREE.MeshStandardMaterial({ color: cssVar("--joint-3d") || "#8fc2ea", roughness: 0.35, metalness: 0.2 });
-  const matTip = new THREE.MeshStandardMaterial({ color: cssVar("--tip-3d") || "#cfe8f7", roughness: 0.3, metalness: 0.1 });
+  // --- materiais: réplica das cores reais do braço (impressão 3D branca
+  // com carcaças pretas nas juntas) — cores fixas, não seguem o tema da UI,
+  // porque o plástico do braço não muda de cor com o modo claro/escuro.
+  const matBody = new THREE.MeshStandardMaterial({ color: 0xf1efe8, roughness: 0.5, metalness: 0.04 });
+  const matBand = new THREE.MeshStandardMaterial({ color: 0xf7f6f2, roughness: 0.4, metalness: 0.04 });
+  const matHousing = new THREE.MeshStandardMaterial({ color: 0x1c1c1f, roughness: 0.45, metalness: 0.2 });
+  const matVent = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.8 });
+  const matGrip = new THREE.MeshStandardMaterial({ color: 0x2a2a2e, roughness: 0.55, metalness: 0.1 });
 
   function mesh(geo, mat, castShadow = true) {
     const m = new THREE.Mesh(geo, mat);
@@ -517,83 +504,97 @@ function buildArmScene() {
     return m;
   }
   function radialJoint(radius, length) {
-    const g = mesh(new THREE.CylinderGeometry(radius, radius, length, 20), matJoint);
+    const g = mesh(new THREE.CylinderGeometry(radius, radius, length, 20), matHousing);
     g.rotation.z = Math.PI / 2;
     return g;
   }
+  // grade de furos de ventilação na face circular de uma carcaça de motor
+  // orientada ao longo do eixo X local (detalhe das juntas pretas do braço real)
+  function ventGrid(group, faceX, discRadius) {
+    const rows = 3, cols = 3, spacing = discRadius * 0.5;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const hole = mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.01, 8), matVent, false);
+        hole.rotation.z = Math.PI / 2;
+        hole.position.set(faceX, (r - 1) * spacing, (c - 1) * spacing);
+        group.add(hole);
+      }
+    }
+  }
 
-  // --- pedestal fixo ---
-  const foot = mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.4, 32), matDark);
-  foot.position.y = 0.2;
+  // --- pé fixo: base cônica preta (não gira) ---
+  const foot = mesh(new THREE.CylinderGeometry(0.34, 0.6, 0.52, 32), matHousing);
+  foot.position.y = 0.26;
   scene3d.add(foot);
-  const collar = mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.14, 32), matJoint);
-  collar.position.y = 0.47;
-  scene3d.add(collar);
+  const footBand = mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.05, 32), matBand);
+  footBand.position.y = 0.5;
+  scene3d.add(footBand);
 
-  // --- base (gira em Y) ---
+  // --- base (gira em Y): carcaça cilíndrica preta com aro branco no topo ---
   const turret = new THREE.Group();
-  turret.position.y = 0.54;
+  turret.position.y = 0.525;
   scene3d.add(turret);
-  const turretBody = mesh(new THREE.CylinderGeometry(0.4, 0.44, 0.28, 24), matPlastic);
-  turretBody.position.y = 0.14;
+  const turretBody = mesh(new THREE.CylinderGeometry(0.34, 0.36, 0.34, 24), matHousing);
+  turretBody.position.y = 0.17;
   turret.add(turretBody);
-  const shoulderAxle = radialJoint(0.16, 0.5);
-  shoulderAxle.position.y = 0.32;
-  turret.add(shoulderAxle);
+  const turretBand = mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.04, 24), matBand);
+  turretBand.position.y = 0.36;
+  turret.add(turretBand);
 
   // --- ombro (pitch) ---
   const shoulder = new THREE.Group();
-  shoulder.position.y = 0.32;
+  shoulder.position.y = 0.38;
   turret.add(shoulder);
-  const upperArm = mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 16), matPlastic);
-  upperArm.position.y = 0.55;
+  const upperArm = mesh(new THREE.CylinderGeometry(0.19, 0.19, 1.05, 16), matBody);
+  upperArm.position.y = 0.525;
   shoulder.add(upperArm);
-  const elbowAxle = radialJoint(0.14, 0.42);
-  elbowAxle.position.y = 1.1;
-  shoulder.add(elbowAxle);
 
-  // --- cotovelo ---
+  // --- cotovelo: carcaça preta grande com furos de ventilação ---
   const elbow = new THREE.Group();
-  elbow.position.y = 1.1;
+  elbow.position.y = 1.05;
   shoulder.add(elbow);
-  const forearm = mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.9, 16), matPlastic);
-  forearm.position.y = 0.45;
+  const elbowHousing = mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.3, 24), matHousing);
+  elbowHousing.rotation.z = Math.PI / 2;
+  elbow.add(elbowHousing);
+  ventGrid(elbow, 0.155, 0.16);
+  ventGrid(elbow, -0.155, 0.16);
+  const forearm = mesh(new THREE.CylinderGeometry(0.15, 0.16, 0.85, 16), matBody);
+  forearm.position.y = 0.42;
   elbow.add(forearm);
-  const wristAxle = radialJoint(0.11, 0.34);
-  wristAxle.position.y = 0.9;
-  elbow.add(wristAxle);
 
   // --- pulso: pitch ---
   const wristPitch = new THREE.Group();
-  wristPitch.position.y = 0.9;
+  wristPitch.position.y = 0.85;
   elbow.add(wristPitch);
-  const wristHousing = mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.24, 16), matPlastic);
-  wristHousing.position.y = 0.12;
-  wristPitch.add(wristHousing);
+  const wristAxle = radialJoint(0.13, 0.4);
+  wristPitch.add(wristAxle);
+  const wristExt = mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.4, 16), matBody);
+  wristExt.position.y = 0.2;
+  wristPitch.add(wristExt);
 
   // --- pulso: roll (gira no próprio eixo — visível de verdade em 3D) ---
   const wristRoll = new THREE.Group();
-  wristRoll.position.y = 0.24;
+  wristRoll.position.y = 0.4;
   wristPitch.add(wristRoll);
-  const rollBody = mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.16, 16), matJoint);
+  const rollBody = mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.16, 16), matHousing);
   rollBody.position.y = 0.08;
   wristRoll.add(rollBody);
-  const rollMark = mesh(new THREE.BoxGeometry(0.03, 0.16, 0.05), matDark, false);
+  const rollMark = mesh(new THREE.BoxGeometry(0.03, 0.16, 0.05), matBand, false);
   rollMark.position.set(0.1, 0.08, 0);
   wristRoll.add(rollMark);
 
-  // --- garra (jaws paralelas) ---
+  // --- garra (jaws paralelas, dedos escuros de borracha) ---
   const gripper = new THREE.Group();
   gripper.position.y = 0.16;
   wristRoll.add(gripper);
-  const gripMount = mesh(new THREE.BoxGeometry(0.24, 0.06, 0.14), matPlastic);
+  const gripMount = mesh(new THREE.BoxGeometry(0.22, 0.06, 0.13), matBody);
   gripMount.position.y = 0.03;
   gripper.add(gripMount);
-  const fingerGeo = new THREE.BoxGeometry(0.06, 0.3, 0.1);
-  const fingerL = mesh(fingerGeo, matTip);
-  const fingerR = mesh(fingerGeo, matTip);
-  fingerL.position.y = 0.06 + 0.15;
-  fingerR.position.y = 0.06 + 0.15;
+  const fingerGeo = new THREE.BoxGeometry(0.055, 0.28, 0.09);
+  const fingerL = mesh(fingerGeo, matGrip);
+  const fingerR = mesh(fingerGeo, matGrip);
+  fingerL.position.y = 0.06 + 0.14;
+  fingerR.position.y = 0.06 + 0.14;
   gripper.add(fingerL, fingerR);
 
   Object.assign(arm3d, { turret, shoulder, elbow, wristPitch, wristRoll, fingerL, fingerR });
