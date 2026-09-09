@@ -376,8 +376,8 @@ JOINTS.forEach(j => {
   jointsEl.appendChild(wrap);
 
   const input = wrap.querySelector("input");
-  input.addEventListener("pointerdown", () => dragging.add(j.id));
-  input.addEventListener("pointerup", () => dragging.delete(j.id));
+  input.addEventListener("pointerdown", () => { dragging.add(j.id); setAxisHighlight(j.id, true); });
+  input.addEventListener("pointerup", () => { dragging.delete(j.id); setAxisHighlight(j.id, false); });
   input.addEventListener("input", () => {
     const v = parseInt(input.value, 10);
     state[j.id] = v;
@@ -455,7 +455,17 @@ const has3D = typeof THREE !== "undefined";
 const hasOrbit = has3D && typeof THREE.OrbitControls !== "undefined";
 
 let renderer3d, scene3d, camera3d, controls3d;
-const arm3d = {};
+const arm3d = { axisRings: {} };
+const AXIS_COLOR = 0xff9a3d;
+const AXIS_COLOR_ACTIVE = 0x5fd1ff;
+
+function setAxisHighlight(id, active) {
+  const ring = arm3d.axisRings[id];
+  if (!ring) return;
+  ring.material.color.setHex(active ? AXIS_COLOR_ACTIVE : AXIS_COLOR);
+  ring.material.opacity = active ? 1 : 0.85;
+  ring.scale.setScalar(active ? 1.18 : 1);
+}
 
 function buildArmScene() {
   scene3d = new THREE.Scene();
@@ -535,6 +545,40 @@ function buildArmScene() {
     g.rotation.z = Math.PI / 2;
     return g;
   }
+  // anel que marca visualmente o eixo de rotação de uma junta — "flat"
+  // orienta o anel para um eixo de giro em Y (base/pulso-giro); sem "flat"
+  // ele já fica de frente para um eixo de giro em Z (ombro/cotovelo/pulso-pitch)
+  function makeAxisRing(radius, flat) {
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, 0.011, 8, 48),
+      new THREE.MeshBasicMaterial({ color: AXIS_COLOR, transparent: true, opacity: 0.85 })
+    );
+    if (flat) ring.rotation.x = Math.PI / 2;
+    return ring;
+  }
+  // etiqueta com o nome da junta, sempre virada pra câmera, desenhada por
+  // cima do modelo (não é ocultada pelas peças na frente)
+  function makeLabel(text) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    ctx.font = "600 28px 'IBM Plex Sans', sans-serif";
+    const textWidth = ctx.measureText(text).width;
+    const chipW = Math.min(240, textWidth + 32);
+    const chipX = (256 - chipW) / 2;
+    ctx.fillStyle = "rgba(15,15,20,0.78)";
+    ctx.fillRect(chipX, 14, chipW, 36);
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 128, 33);
+    const tex = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+    sprite.scale.set(0.6, 0.15, 1);
+    sprite.renderOrder = 999;
+    return sprite;
+  }
   // grade de furos de ventilação na face circular de uma carcaça de motor
   // orientada ao longo do eixo X local (detalhe das juntas pretas do braço real)
   function ventGrid(group, faceX, discRadius) {
@@ -568,6 +612,15 @@ function buildArmScene() {
   turretBand.position.y = 0.36;
   turret.add(turretBand);
 
+  // eixo da base (gira em Y) — anel "deitado" + etiqueta, fixos no pé
+  const baseRing = makeAxisRing(0.46, true);
+  baseRing.position.y = 0.525;
+  scene3d.add(baseRing);
+  const baseLabel = makeLabel("Base");
+  baseLabel.position.set(0.62, 0.525, 0);
+  scene3d.add(baseLabel);
+  arm3d.axisRings.base = baseRing;
+
   // --- ombro (pitch) ---
   const shoulder = new THREE.Group();
   shoulder.position.y = 0.38;
@@ -575,6 +628,15 @@ function buildArmScene() {
   const upperArm = mesh(new THREE.CylinderGeometry(0.19, 0.19, 1.05, 16), matBody);
   upperArm.position.y = 0.525;
   shoulder.add(upperArm);
+
+  // eixo do ombro (gira em Z) — fixo na base, na altura do pivô do ombro
+  const shoulderRing = makeAxisRing(0.3, false);
+  shoulderRing.position.y = 0.38;
+  turret.add(shoulderRing);
+  const shoulderLabel = makeLabel("Ombro");
+  shoulderLabel.position.set(0.42, 0.38, 0);
+  turret.add(shoulderLabel);
+  arm3d.axisRings.shoulder = shoulderRing;
 
   // --- cotovelo: carcaça preta grande com furos de ventilação ---
   const elbow = new THREE.Group();
@@ -589,6 +651,15 @@ function buildArmScene() {
   forearm.position.y = 0.42;
   elbow.add(forearm);
 
+  // eixo do cotovelo (gira em Z) — fixo no ombro, na altura do pivô do cotovelo
+  const elbowRing = makeAxisRing(0.34, false);
+  elbowRing.position.y = 1.05;
+  shoulder.add(elbowRing);
+  const elbowLabel = makeLabel("Cotovelo");
+  elbowLabel.position.set(0.46, 1.05, 0);
+  shoulder.add(elbowLabel);
+  arm3d.axisRings.elbow = elbowRing;
+
   // --- pulso: pitch ---
   const wristPitch = new THREE.Group();
   wristPitch.position.y = 0.85;
@@ -598,6 +669,15 @@ function buildArmScene() {
   const wristExt = mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.4, 16), matBody);
   wristExt.position.y = 0.2;
   wristPitch.add(wristExt);
+
+  // eixo do pulso-pitch (gira em Z) — fixo no cotovelo
+  const wristPitchRing = makeAxisRing(0.23, false);
+  wristPitchRing.position.y = 0.85;
+  elbow.add(wristPitchRing);
+  const wristPitchLabel = makeLabel("Pulso P");
+  wristPitchLabel.position.set(0.35, 0.85, 0);
+  elbow.add(wristPitchLabel);
+  arm3d.axisRings.wristPitch = wristPitchRing;
 
   // --- pulso: roll (gira no próprio eixo — visível de verdade em 3D) ---
   const wristRoll = new THREE.Group();
@@ -609,6 +689,15 @@ function buildArmScene() {
   const rollMark = mesh(new THREE.BoxGeometry(0.03, 0.16, 0.05), matBand, false);
   rollMark.position.set(0.1, 0.08, 0);
   wristRoll.add(rollMark);
+
+  // eixo do pulso-roll (gira em Y) — fixo no pulso-pitch
+  const wristRollRing = makeAxisRing(0.19, true);
+  wristRollRing.position.y = 0.4;
+  wristPitch.add(wristRollRing);
+  const wristRollLabel = makeLabel("Pulso R");
+  wristRollLabel.position.set(0.32, 0.4, 0);
+  wristPitch.add(wristRollLabel);
+  arm3d.axisRings.wristRoll = wristRollRing;
 
   // --- garra (jaws paralelas, dedos escuros de borracha) ---
   const gripper = new THREE.Group();
@@ -623,6 +712,11 @@ function buildArmScene() {
   fingerL.position.y = 0.06 + 0.14;
   fingerR.position.y = 0.06 + 0.14;
   gripper.add(fingerL, fingerR);
+
+  // garra: junta linear (não giratória) — etiqueta sem anel de rotação
+  const gripperLabel = makeLabel("Garra");
+  gripperLabel.position.set(0.3, 0.16, 0);
+  wristRoll.add(gripperLabel);
 
   Object.assign(arm3d, { turret, shoulder, elbow, wristPitch, wristRoll, fingerL, fingerR });
   syncArmToState();

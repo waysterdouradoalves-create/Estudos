@@ -33,7 +33,10 @@ esp32-robotic-arm/
 4. A página também desenha um "gêmeo visual" 3D do braço (Three.js/WebGL)
    que se move junto com os sliders — dá pra arrastar para girar a câmera
    e usar o scroll para dar zoom, para conferir a pose antes/durante o
-   movimento real.
+   movimento real. Cada uma das 6 juntas tem um anel laranja marcando seu
+   eixo de rotação e uma etiqueta com o nome — o anel acende em azul
+   enquanto você arrasta o slider daquela junta, pra ficar claro qual eixo
+   está se mexendo.
 
 ### Motor de passo x servo: por que tem uma calibração
 
