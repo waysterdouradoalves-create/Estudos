@@ -248,6 +248,18 @@
   .speed-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
   .speed-row label { font-size: 13px; color: var(--text2); white-space: nowrap; }
 
+  .calib-banner {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--panel2);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    font-size: 12px;
+  }
+  input[type="range"]:disabled,
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
   .seq-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 180px; overflow-y: auto; }
   .seq-item {
     display: flex; align-items: center; justify-content: space-between;
@@ -297,12 +309,15 @@
 
     <div class="speed-row">
       <label for="speed">Velocidade</label>
-      <input type="range" id="speed" min="1" max="10" value="3">
-      <span id="speedVal" style="color:var(--accent2); font-size:13px;">3</span>
+      <input type="range" id="speed" min="1" max="10" value="6">
+      <span id="speedVal" style="color:var(--accent2); font-size:13px;">6</span>
     </div>
+
+    <div class="calib-banner" id="calibBanner" hidden>Calibrando eixos (buscando fins de curso)&hellip; controles desativados.</div>
 
     <div class="row" style="margin-top:16px;">
       <button class="primary" id="btnHome">Posição inicial (Home)</button>
+      <button id="btnCalibrate">Calibrar eixos</button>
       <button id="btnSave">+ Salvar posição</button>
       <button class="danger" id="btnClear">Limpar sequência</button>
     </div>
@@ -380,6 +395,16 @@ function sendMove(id, pos) {
 }
 
 // ------------------------- WebSocket -------------------------
+let calibrating = false;
+
+function setCalibrating(on) {
+  calibrating = on;
+  document.getElementById("calibBanner").hidden = !on;
+  document.querySelectorAll('#joints input[type="range"], #btnHome, #btnPlaySeq').forEach(el => {
+    el.disabled = on;
+  });
+}
+
 function connect() {
   const proto = location.protocol === "https:" ? "wss" : "ws";
   ws = new WebSocket(`${proto}://${location.host}/ws`);
@@ -398,13 +423,15 @@ function connect() {
     try {
       const msg = JSON.parse(evt.data);
       if (msg.type === "state" && Array.isArray(msg.angles)) {
+        if (typeof msg.calibrating === "boolean") setCalibrating(msg.calibrating);
         msg.angles.forEach(a => {
           if (dragging.has(a.id)) return; // não sobrescreve enquanto o usuário arrasta
-          state[a.id] = a.angle;
+          const angle = Math.round(a.angle);
+          state[a.id] = angle;
           const range = document.getElementById(`range-${a.id}`);
           const val = document.getElementById(`val-${a.id}`);
-          if (range) range.value = a.angle;
-          if (val) val.textContent = a.angle + "°";
+          if (range) range.value = angle;
+          if (val) val.textContent = angle + "°";
         });
         updateVisual();
       }
@@ -665,6 +692,12 @@ document.getElementById("btnHome").addEventListener("click", () => {
   });
   updateVisual();
   send({ cmd: "home" });
+});
+
+document.getElementById("btnCalibrate").addEventListener("click", () => {
+  if (confirm("Recalibrar os eixos? O braço vai se mover em direção aos fins de curso.")) {
+    send({ cmd: "calibrate" });
+  }
 });
 
 document.getElementById("speed").addEventListener("input", (e) => {

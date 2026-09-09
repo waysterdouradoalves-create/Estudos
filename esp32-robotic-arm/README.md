@@ -1,10 +1,11 @@
-# Braço Robótico 6 Eixos com ESP32
+# Braço Robótico 6 Eixos com ESP32 (motores de passo)
 
 Controle via navegador (celular, tablet ou PC) para um braço robótico de
-6 graus de liberdade no estilo "desktop cobot" (base giratória, ombro,
-cotovelo, pulso com 2 eixos e garra) como o da foto de referência. O ESP32
-hospeda o site de controle e move os servos em Wi-Fi, sem precisar de app
-nem de computador conectado por USB durante o uso.
+6 graus de liberdade (base giratória, ombro, cotovelo, pulso com 2 eixos
+e garra), acionado por **motores de passo** (NEMA17 + driver A4988/DRV8825/
+TMC2209) via ESP32. O ESP32 hospeda o site de controle e move os motores
+em Wi-Fi, sem precisar de app nem de computador conectado por USB durante
+o uso.
 
 ```
 esp32-robotic-arm/
@@ -20,13 +21,34 @@ esp32-robotic-arm/
    se não conseguir).
 2. Ele serve o arquivo `data/index.html` por HTTP e abre um WebSocket em
    `/ws`.
-3. A página tem um slider para cada uma das 6 juntas. Ao mover um slider,
-   o navegador manda `{"cmd":"move","id":"shoulder","pos":120}` pelo
-   WebSocket; o ESP32 aplica a rampa de movimento e escreve no servo.
+3. A página tem um slider (em **graus**) para cada uma das 6 juntas. Ao
+   mover um slider, o navegador manda
+   `{"cmd":"move","id":"shoulder","pos":120}` pelo WebSocket; o ESP32
+   converte o ângulo em passos (usando a relação de micropasso/redução de
+   cada junta) e comanda o motor com aceleração/desaceleração suave via
+   `AccelStepper`.
 4. A página também desenha um "gêmeo visual" 3D do braço (Three.js/WebGL)
    que se move junto com os sliders — dá pra arrastar para girar a câmera
    e usar o scroll para dar zoom, para conferir a pose antes/durante o
    movimento real.
+
+### Motor de passo x servo: por que tem uma calibração
+
+Diferente de um servo de hobby (que sempre "sabe" seu ângulo pelo próprio
+sinal PWM), um motor de passo só sabe **quantos passos deu desde algum
+ponto de referência** — ele não tem ideia de onde está fisicamente quando
+o ESP32 liga. Por isso o firmware faz, a cada boot, uma rotina de
+**calibração**: cada junta gira devagar em direção a um **fim de curso**
+(microswitch) até acioná-lo, e a partir daí o ESP32 sabe exatamente onde
+está cada eixo. Você também pode disparar essa rotina a qualquer momento
+pelo botão **"Calibrar eixos"** na página (por exemplo, se mexeu no braço
+manualmente com o motor desenergizado).
+
+Se alguma junta não tiver fim de curso cadastrado (`endstopPin: -1`), o
+firmware assume que você posicionou o braço manualmente na posição
+"home" **antes de ligar**, e conta os passos a partir daí — sem fim de
+curso não há como saber se essa suposição está certa, então prefira
+sempre instalar os microswitches.
 
 ### Sobre a visualização 3D e internet
 
@@ -55,31 +77,60 @@ E troque as duas tags `<script src="https://cdnjs...">` no topo do
 | Item | Observação |
 |---|---|
 | ESP32 DevKit (30 ou 38 pinos) | Qualquer variante com Wi-Fi |
-| 6x servo padrão (ex.: MG996R/DS3218 nas juntas base/ombro/cotovelo, SG90/MG90S no pulso/garra) | Dimensione o torque pelo peso real do seu braço |
-| Fonte externa 5–6 V, 5 A ou mais | **Não alimente os servos pelo pino 5V do ESP32** |
-| Capacitor eletrolítico 470–1000 µF | Entre + e − da fonte dos servos, reduz picos de corrente |
+| 6x motor de passo NEMA17 (ou NEMA14/23 nas juntas de mais carga) | Dimensione o torque pelo peso real do seu braço |
+| 6x driver A4988, DRV8825 ou TMC2209 | TMC2209 é mais silencioso e permite mais microsteps |
+| 6x microswitch (fim de curso) | Um por junta, para a calibração automática |
+| Fonte externa dedicada aos drivers (tipicamente 12–24 V, corrente somada dos 6 motores) | **Nunca alimente os motores pelo 5V do ESP32** — confira a corrente de cada driver (potenciômetro/Vref) antes de ligar, senão o motor esquenta |
+| Capacitor eletrolítico de alta tensão (ex.: 100 µF/35V+) | Entre + e − da alimentação dos drivers, perto dos módulos |
 | Fios/jumpers, terminal de parafuso | Para a fiação de força |
 
 ### Ligação dos pinos (padrão do firmware)
 
-| Junta | Pino GPIO | Faixa de segurança sugerida |
-|---|---|---|
-| Base (giro) | 13 | 0°–180° |
-| Ombro | 14 | 15°–165° |
-| Cotovelo | 27 | 0°–180° |
-| Pulso (cima/baixo) | 26 | 0°–180° |
-| Pulso (giro) | 25 | 0°–180° |
-| Garra | 33 | 10°–90° |
+| Junta | STEP | DIR | Fim de curso | Faixa sugerida |
+|---|---|---|---|---|
+| Base (giro) | 13 | 4 | 34 | 0°–180° |
+| Ombro | 14 | 16 | 35 | 15°–165° |
+| Cotovelo | 27 | 17 | 36 | 0°–180° |
+| Pulso (cima/baixo) | 26 | 18 | 39 | 0°–180° |
+| Pulso (giro) | 25 | 19 | 32 | 0°–180° |
+| Garra | 33 | 21 | 23 | 10°–90° |
+| ENABLE (compartilhado entre os 6 drivers) | 22 | — | — | ativo em LOW |
 
-Ajuste os pinos e os limites de ângulo (`minAngle`/`maxAngle`/`homeAngle`)
-em `src/main.cpp`, no array `joints[]`, para bater com a montagem mecânica
-real — os limites evitam que um servo force contra o batente e queime.
+Os pinos 34, 35, 36 e 39 são **somente entrada** e não têm resistor de
+pull-up interno — ligue cada fim de curso entre o GPIO e o GND, com um
+resistor de pull-up externo de ~10 kΩ do GPIO até 3,3 V (assim ele lê HIGH
+em repouso e LOW quando a chave é acionada). Use a mesma lógica nos
+demais fins de curso para manter tudo consistente.
+
+Ajuste no array `joints[]` (`src/main.cpp`) para bater com a sua
+montagem real:
+- `stepPin`/`dirPin`/`endstopPin`: pinos usados.
+- `homeDir`: sentido de giro (+1 ou -1) para ir em direção ao fim de curso.
+- `homeSwitchAngle`: ângulo que o fim de curso representa fisicamente.
+- `motorStepsPerRev`, `microsteps`, `gearRatio`: definem quantos passos
+  correspondem a 1 grau daquela junta — **você precisa calibrar isso**
+  (veja abaixo).
+- `minAngle`/`maxAngle`/`homeAngle`: limites mecânicos e posição de
+  descanso.
+- `maxSpeedDegPerSec`/`accelDegPerSec2`/`homingSpeedDegPerSec`: velocidade
+  de operação normal e velocidade (bem mais lenta) da busca pelo fim de
+  curso.
+
+**Como calibrar `gearRatio`:** comande a junta para girar um ângulo
+conhecido (ex.: 90°) pela interface, meça o quanto o eixo de saída
+realmente girou com um transferidor, e ajuste `gearRatio` proporcionalmente
+(`gearRatio_novo = gearRatio_atual × ângulo_comandado / ângulo_real`). Em
+juntas com polia/correia, você também pode calcular direto contando os
+dentes das duas polias (`gearRatio = dentes_polia_grande / dentes_polia_motor`).
 
 **Fiação de força (importante):**
-- Uma fonte externa de 5–6 V alimenta os `+`/`−` de todos os servos.
+- A alimentação dos drivers (VMOT) vem de uma fonte externa dedicada — a
+  tensão e corrente dependem do motor/driver escolhidos, confira o
+  datasheet.
 - O `GND` da fonte externa precisa estar ligado ao `GND` do ESP32
-  (referência comum) — sem isso o sinal PWM não funciona direito.
-- O sinal de cada servo vai direto no GPIO correspondente da tabela acima.
+  (referência comum).
+- **Regule a corrente (Vref) de cada driver antes de conectar o motor.**
+  Sem isso o motor pode superaquecer ou perder passos.
 - Evite os pinos 0, 2, 5, 6–11, 12 e 15 do ESP32 (usados no boot/flash).
 
 ## Firmware (ESP32)
@@ -87,47 +138,60 @@ real — os limites evitam que um servo force contra o batente e queime.
 ### Opção A — PlatformIO (recomendado)
 
 1. Abra a pasta `esp32-robotic-arm/` no VSCode com a extensão PlatformIO.
-2. Edite `src/main.cpp` e preencha `WIFI_SSID`/`WIFI_PASSWORD`.
+2. Edite `src/main.cpp` e preencha `WIFI_SSID`/`WIFI_PASSWORD`, além dos
+   pinos/relação de redução de cada junta no array `joints[]`.
 3. Grave o firmware: `pio run --target upload`.
 4. Envie a interface web para o sistema de arquivos:
    `pio run --target uploadfs`.
-5. Abra o Monitor Serial (`pio device monitor`) para ver o IP atribuído.
+5. Abra o Monitor Serial (`pio device monitor`) para acompanhar a
+   calibração inicial e ver o IP atribuído.
 
 ### Opção B — Arduino IDE
 
 1. Instale o suporte a placas ESP32 (Board Manager) e, no Library
    Manager, instale: `ESPAsyncWebServer`, `AsyncTCP`, `ArduinoJson`
-   (v7+) e `ESP32Servo`.
+   (v7+) e `AccelStepper` (de Mike McCauley).
 2. Instale o plugin "ESP32 Sketch Data Upload" para gravar a pasta
    `data/` no LittleFS.
 3. Abra `src/main.cpp` como um sketch (renomeie a pasta para
    `esp32_robotic_arm/esp32_robotic_arm.ino` se preferir a extensão
-   `.ino`), preencha o Wi-Fi, grave o firmware e depois use
+   `.ino`), preencha o Wi-Fi e os pinos, grave o firmware e depois use
    "ESP32 Sketch Data Upload" para enviar `data/index.html`.
 
 ## Usando o site
 
-1. Depois de gravar, veja o IP no Monitor Serial (ex.: `192.168.0.42`)
-   ou, se caiu no modo ponto de acesso, conecte no Wi-Fi
-   **ESP32-BracoRobotico** (senha `robotica123`) e acesse `192.168.4.1`.
-2. Abra esse endereço no navegador do celular ou PC — a página já
-   carrega os sliders e o desenho do braço.
-3. Botões:
-   - **Home** — leva todas as juntas para a posição inicial.
-   - **Velocidade** — controla o quão rápido o braço reage ao slider
-     (rampa suave, evita puxar corrente demais de uma vez).
+1. Ao ligar, o ESP32 primeiro calibra todas as juntas (busca os fins de
+   curso) — acompanhe pelo Monitor Serial na primeira vez para confirmar
+   que cada junta gira no sentido certo. Depois disso ele conecta no
+   Wi-Fi e sobe o site.
+2. Veja o IP no Monitor Serial (ex.: `192.168.0.42`) ou, se caiu no modo
+   ponto de acesso, conecte no Wi-Fi **ESP32-BracoRobotico** (senha
+   `robotica123`) e acesse `192.168.4.1`.
+3. Abra esse endereço no navegador do celular ou PC — a página já
+   carrega os sliders e o gêmeo visual 3D do braço.
+4. Botões:
+   - **Posição inicial (Home)** — leva todas as juntas ao ângulo de
+     descanso (`homeAngle`), assumindo que a calibração já rodou.
+   - **Calibrar eixos** — refaz a busca pelos fins de curso a qualquer
+     momento (pede confirmação, porque o braço se move sozinho).
+   - **Velocidade** — escala a velocidade/aceleração de todas as juntas.
    - **Salvar posição / Reproduzir sequência** — grava poses no
      navegador (localStorage) e reproduz em sequência, como uma rotina
      simples de pick-and-place.
 
 ## Segurança e boas práticas
 
-- Sempre ligue a fonte dos servos por último e desligue primeiro,
-  segurando o braço se ele não estiver na posição "home".
-- Ajuste `minAngle`/`maxAngle` de cada junta assim que montar o braço,
-  testando movimento livre antes de prender a garra/carga.
-- Comece com `moveSpeed` baixo (1–3) até garantir que os limites
-  mecânicos e a fonte de alimentação estão corretos.
+- **Regule a corrente de cada driver (Vref) antes de conectar os
+  motores** — é a causa nº 1 de motor de passo superaquecendo.
+- Instale os 6 fins de curso antes de confiar na calibração automática;
+  sem eles, o braço pode ir contra o próprio limite mecânico achando que
+  ainda tem curso.
+- Ao testar pela primeira vez, solte a garra/carga e deixe o braço se
+  mover livremente para conferir se `homeDir`, `minAngle`/`maxAngle` e
+  `gearRatio` de cada junta estão corretos.
+- Comece com velocidade baixa (2–4) até confirmar a calibração e os
+  limites mecânicos.
+- Sempre ligue a fonte dos drivers por último e desligue primeiro.
 
 ## Próximos passos (ideias de evolução)
 
@@ -135,3 +199,5 @@ real — os limites evitam que um servo force contra o batente e queime.
   ângulo).
 - Controle por joystick/gamepad via WebSocket.
 - Autenticação simples na página para uso fora da rede local.
+- Detecção de perda de passo (stall) com drivers TMC2209 em modo
+  StallGuard, para recalibrar sozinho se travar.
